@@ -66,37 +66,28 @@ public class ArtistPresenter {
 
     public void artistSelectListener(){
         compositeDisposable.add(
-                RxEventBus.getInstance().subscribe(new Consumer<Object>() {
-                    @Override
-                    public void accept(Object o) throws Exception {
-                        if (o instanceof ArtistSelectedEvent){
-                            artistView.displaySelectedArtistView();
-                        }
+                RxEventBus.getInstance().subscribe(o -> {
+                    if (o instanceof ArtistSelectedEvent){
+                        artistView.displaySelectedArtistView();
                     }
                 })
         );
     }
 
     private void sortList(List<List<Song>> artists) {
-        Collections.sort(artists, new Comparator<List<Song>>() {
-            @Override
-            public int compare(List<Song> lhs, List<Song> rhs) {
-                String t1=lhs.get(0).artist;
-                String t2=rhs.get(0).artist;
-                return t1.compareTo(t2);
-            }
+        Collections.sort(artists, (lhs, rhs) -> {
+            String t1=lhs.get(0).artist;
+            String t2=rhs.get(0).artist;
+            return t1.compareTo(t2);
         });
     }
 
     public void scrollListener() {
         compositeDisposable.add(
-                ReplayEventBus.getInstance().subscribe(new Consumer<Object>() {
-                    @Override
-                    public void accept(Object o) throws Exception {
-                        if (o instanceof ArtistAdapterPositionEvent){
-                            int index = ((ArtistAdapterPositionEvent) o).getIndex();
-                            artistView.scrollTo(index);
-                        }
+                ReplayEventBus.getInstance().subscribe(o -> {
+                    if (o instanceof ArtistAdapterPositionEvent){
+                        int index = ((ArtistAdapterPositionEvent) o).getIndex();
+                        artistView.scrollTo(index);
                     }
                 })
         );

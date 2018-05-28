@@ -27,26 +27,11 @@ public class ArtistDAO extends SongDao implements ArtistRepository {
         final List<Song> songList = loadSongsFromDB();
 
         return Observable.fromIterable(songList)
-                .map(new Function<Song, String>() {
-                    @Override
-                    public String apply(@NonNull Song song) throws Exception {
-                        return song.artist;
-                    }
-                })
+                .map(song -> song.artist)
                 .distinct()
-                .flatMap(new Function<String, Observable<List<Song>>>() {
-                    @Override
-                    public Observable<List<Song>> apply(@NonNull final String artist) throws Exception {
-                        return Observable.fromIterable(songList)
-                                .filter(new Predicate<Song>() {
-                                    @Override
-                                    public boolean test(@NonNull Song song) throws Exception {
-                                        return artist.equals(song.artist);
-                                    }
-                                })
-                                .toList()
-                                .toObservable();
-                    }
-                }).toList();
+                .flatMap(artist -> Observable.fromIterable(songList)
+                        .filter(song -> artist.equals(song.artist))
+                        .toList()
+                        .toObservable()).toList();
     }
 }

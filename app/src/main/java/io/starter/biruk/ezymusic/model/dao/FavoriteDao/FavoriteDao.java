@@ -41,85 +41,56 @@ public class FavoriteDao extends SongDao implements FavoriteRepository {
     @Override
     public Single<Song> updateFavoriteStatus(final Song song) {
         return isFavorite(song)
-                .map(new Function<Boolean, Song>() {
-                    @Override
-                    public Song apply(@NonNull Boolean favorite) throws Exception {
-                        Log.i(TAG, "\t" + song.title);
-                        if (favorite) {
-                            //remove from favorite
-                            song.favorite = false;
-                            Log.i(TAG, "\t" + song.title + "\t" + false);
-                            songDao.update(song);
-                        } else if (!favorite) {
-                            //add to favorite
-                            song.favorite = true;
-                            Log.i(TAG, "\t" + song.title + "\t" + true);
-                            songDao.update(song);
-                        }
-                        return song;
+                .map(favorite -> {
+                    Log.i(TAG, "\t" + song.title);
+                    if (favorite) {
+                        //remove from favorite
+                        song.favorite = false;
+                        Log.i(TAG, "\t" + song.title + "\t" + false);
+                        songDao.update(song);
+                    } else if (!favorite) {
+                        //add to favorite
+                        song.favorite = true;
+                        Log.i(TAG, "\t" + song.title + "\t" + true);
+                        songDao.update(song);
                     }
+                    return song;
                 });
     }
 
     @Override
     public Single<Boolean> isFavorite(final Song song) {
-        return Single.fromCallable(new Callable<Song>() {
-            @Override
-            public Song call() throws Exception {
-                return songDao.queryForId(song.data);
-            }
-        })
-                .map(new Function<Song, Boolean>() {
-                    @Override
-                    public Boolean apply(@NonNull Song song) throws Exception {
-                        Log.i(TAG, "\t" + song.title);
-                        return song.favorite;
-                    }
+        return Single.fromCallable(() -> songDao.queryForId(song.data))
+                .map(song1 -> {
+                    Log.i(TAG, "\t" + song1.title);
+                    return song1.favorite;
                 });
     }
 
     @Override
     public Single<List<Song>> loadFavorites() {
         return Observable.fromIterable(this.loadSongsFromDB())
-                .filter(new Predicate<Song>() {
-                    @Override
-                    public boolean test(@NonNull Song song) throws Exception {
-                        return song.favorite;
-                    }
-                })
+                .filter(song -> song.favorite)
                 .toList();
     }
 
     @Override
     public Single<List<Song>> loadDistinctFavoriteCoverArt() {
         return Observable.fromIterable(this.loadSongsFromDB())
-                .filter(new Predicate<Song>() {
-                    @Override
-                    public boolean test(@NonNull Song song) throws Exception {
-                        return song.favorite;
+                .filter(song -> song.favorite)
+                .distinct(song -> song.albumId)
+                .filter(song -> {
+                    Bitmap bitmap = null;
+                    try {
+                        bitmap = MediaStore.Images.Media.getBitmap(apContext.getContentResolver(), songFormatUtil.getAlbumArtWorkUri(song.albumId));
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
-                })
-                .distinct(new Function<Song, Long>() {
-                    @Override
-                    public Long apply(@NonNull Song song) throws Exception {
-                        return song.albumId;
-                    }
-                })
-                .filter(new Predicate<Song>() {
-                    @Override
-                    public boolean test(@NonNull Song song) {
-                        Bitmap bitmap = null;
-                        try {
-                            bitmap = MediaStore.Images.Media.getBitmap(apContext.getContentResolver(), songFormatUtil.getAlbumArtWorkUri(song.albumId));
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        if (bitmap == null) {
+                    if (bitmap == null) {
 
-                            return false;
-                        }
-                        return true;
+                        return false;
                     }
+                    return true;
                 })
                 .toList();
     }
@@ -127,34 +98,20 @@ public class FavoriteDao extends SongDao implements FavoriteRepository {
     @Override
     public Single<List<Song>> loadDistinctFavoriteCoverArt(List<Song> songs) {
         return Observable.fromIterable(this.loadSongsFromDB())
-                .filter(new Predicate<Song>() {
-                    @Override
-                    public boolean test(@NonNull Song song) throws Exception {
-                        return song.favorite;
+                .filter(song -> song.favorite)
+                .distinct(song -> song.albumId)
+                .filter(song -> {
+                    Bitmap bitmap = null;
+                    try {
+                        bitmap = MediaStore.Images.Media.getBitmap(apContext.getContentResolver(), songFormatUtil.getAlbumArtWorkUri(song.albumId));
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
-                })
-                .distinct(new Function<Song, Long>() {
-                    @Override
-                    public Long apply(@NonNull Song song) throws Exception {
-                        return song.albumId;
-                    }
-                })
-                .filter(new Predicate<Song>() {
-                    @Override
-                    public boolean test(@NonNull Song song) {
-                        Bitmap bitmap = null;
-                        try {
-                            bitmap = MediaStore.Images.Media.getBitmap(apContext.getContentResolver(), songFormatUtil.getAlbumArtWorkUri(song.albumId));
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        if (bitmap == null) {
+                    if (bitmap == null) {
 
-                            return false;
-                        }
-                        return true;
+                        return false;
                     }
-
+                    return true;
                 })
                 .toList();
     }

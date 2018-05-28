@@ -27,13 +27,10 @@ public class SearchDAO extends SongDao implements SearchRepository {
     }
 
     private void init() {
-        ReplayEventBus.getInstance().subscribe(new Consumer<Object>() {
-            @Override
-            public void accept(Object o) throws Exception {
-                if (o instanceof SongLoadCompletedEvent){
-                    List<Song> songList = ((SongLoadCompletedEvent) o).getSongList();
-                    setSongs(songList);
-                }
+        ReplayEventBus.getInstance().subscribe(o -> {
+            if (o instanceof SongLoadCompletedEvent){
+                List<Song> songList = ((SongLoadCompletedEvent) o).getSongList();
+                setSongs(songList);
             }
         });
     }
@@ -41,14 +38,9 @@ public class SearchDAO extends SongDao implements SearchRepository {
     @Override
     public Observable<List<Song>> searchResults(final String query) {
         return Observable.fromIterable(this.songs)
-                .filter(new Predicate<Song>() {
-                    @Override
-                    public boolean test(@NonNull Song song) throws Exception {
-                        return song.artist.contains(query) ||
-                                song.title.contains(query) ||
-                                song.albumTitle.contains(query);
-                    }
-                }).toList()
+                .filter(song -> song.artist.contains(query) ||
+                        song.title.contains(query) ||
+                        song.albumTitle.contains(query)).toList()
                 .toObservable();
 
 

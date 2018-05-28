@@ -108,14 +108,11 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
     * */
     private void shuffleModeListener() {
         mediaServiceCompositeDisposable.add(
-                MediaRxEventBus.getInstance().subscribe(new Consumer<Object>() {
-                    @Override
-                    public void accept(Object o) throws Exception {
-                        if (o instanceof ShuffleToggleEvent) {
-                            //toggle the state
-                            shuffle = Shuffle.toggleMode(shuffle);
-                            MediaReplayEventBus.getInstance().post(new ShufflePostEvent(shuffle));
-                        }
+                MediaRxEventBus.getInstance().subscribe(o -> {
+                    if (o instanceof ShuffleToggleEvent) {
+                        //toggle the state
+                        shuffle = Shuffle.toggleMode(shuffle);
+                        MediaReplayEventBus.getInstance().post(new ShufflePostEvent(shuffle));
                     }
                 })
         );
@@ -128,13 +125,10 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
     * */
     private void repeatModeListener() {
         mediaServiceCompositeDisposable.add(
-                MediaRxEventBus.getInstance().subscribe(new Consumer<Object>() {
-                    @Override
-                    public void accept(Object o) throws Exception {
-                        if (o instanceof RepeatToggleEvent) {
-                            repeat = Repeat.toggleMode(repeat);
-                            MediaReplayEventBus.getInstance().post(new RepeatPostEvent(repeat));
-                        }
+                MediaRxEventBus.getInstance().subscribe(o -> {
+                    if (o instanceof RepeatToggleEvent) {
+                        repeat = Repeat.toggleMode(repeat);
+                        MediaReplayEventBus.getInstance().post(new RepeatPostEvent(repeat));
                     }
                 })
         );
@@ -338,11 +332,8 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
 
             MediaReplayEventBus.getInstance().post(new ChangePlayPauseEvent(mediaPlayer.isPlaying()));
 
-            Thread updateCurrentElapsedTime = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    updateCurrentPosition();
-                }
+            Thread updateCurrentElapsedTime = new Thread(() -> {
+                updateCurrentPosition();
             });
 
             updateCurrentElapsedTime.start();
@@ -388,15 +379,12 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
     /*
     *  subscriber that listenes for ToggleEvent and toggles the media playbac
     * */
-    private Disposable playPauseToggle = RxEventBus.getInstance().subscribe(new Consumer<Object>() {
-        @Override
-        public void accept(Object o) throws Exception {
-            if (o instanceof TogglePlayEvent) {
-                if (isPlaying()) {
-                    pause();
-                } else {
-                    resume();
-                }
+    private Disposable playPauseToggle = RxEventBus.getInstance().subscribe(o -> {
+        if (o instanceof TogglePlayEvent) {
+            if (isPlaying()) {
+                pause();
+            } else {
+                resume();
             }
         }
     });
@@ -405,24 +393,18 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
     * subscriber that listenes for play event and plays the specified track by using
     * the index that it recieved from the event publisher
     * */
-    private Disposable playTrack = RxEventBus.getInstance().subscribe(new Consumer<Object>() {
-        @Override
-        public void accept(Object o) throws Exception {
-            if (o instanceof PlayTrackEvent) {
-                int index = ((PlayTrackEvent) o).getIndex();
-                setIndex(index);
-                play();
-            }
+    private Disposable playTrack = RxEventBus.getInstance().subscribe(o -> {
+        if (o instanceof PlayTrackEvent) {
+            int index1 = ((PlayTrackEvent) o).getIndex();
+            setIndex(index1);
+            play();
         }
     });
 
-    private Disposable seekTo = MediaRxEventBus.getInstance().subscribe(new Consumer<Object>() {
-        @Override
-        public void accept(Object o) throws Exception {
-            if (o instanceof SeekToEvent) {
-                int index = ((SeekToEvent) o).getIndex();
-                seekTo(index);
-            }
+    private Disposable seekTo = MediaRxEventBus.getInstance().subscribe(o -> {
+        if (o instanceof SeekToEvent) {
+            int index1 = ((SeekToEvent) o).getIndex();
+            seekTo(index1);
         }
     });
 

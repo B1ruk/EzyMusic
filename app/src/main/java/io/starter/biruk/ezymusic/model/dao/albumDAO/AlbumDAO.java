@@ -27,27 +27,12 @@ public class AlbumDAO extends SongDao implements AlbumRepository {
         final List<Song> songList = this.loadSongsFromDB();
 
         return Observable.fromIterable(songList)
-                .map(new Function<Song, Long>() {
-                    @Override
-                    public Long apply(@NonNull Song song) throws Exception {
-                        return song.albumId;
-                    }
-                })
+                .map(song -> song.albumId)
                 .distinct()
-                .flatMap(new Function<Long, Observable<List<Song>>>() {
-                    @Override
-                    public Observable<List<Song>> apply(@NonNull final Long albumId) throws Exception {
-                        return Observable.fromIterable(songList)
-                                .filter(new Predicate<Song>() {
-                                    @Override
-                                    public boolean test(@NonNull Song song) throws Exception {
-                                        return albumId == song.albumId;
-                                    }
-                                })
-                                .toList()
-                                .toObservable();
-                    }
-                })
+                .flatMap(albumId -> Observable.fromIterable(songList)
+                        .filter(song -> albumId == song.albumId)
+                        .toList()
+                        .toObservable())
                 .toList();
 
     }
@@ -55,27 +40,12 @@ public class AlbumDAO extends SongDao implements AlbumRepository {
     @Override
     public Single<List<List<Song>>> loadAlbums(final List<Song> songList) {
         return Observable.fromIterable(songList)
-                .map(new Function<Song, Long>() {
-                    @Override
-                    public Long apply(@NonNull Song song) throws Exception {
-                        return song.albumId;
-                    }
-                })
+                .map(song -> song.albumId)
                 .distinct()
-                .flatMap(new Function<Long, Observable<List<Song>>>() {
-                    @Override
-                    public Observable<List<Song>> apply(@NonNull final Long albumId) throws Exception {
-                        return Observable.fromIterable(songList)
-                                .filter(new Predicate<Song>() {
-                                    @Override
-                                    public boolean test(@NonNull Song song) throws Exception {
-                                        return albumId == song.albumId;
-                                    }
-                                })
-                                .toList()
-                                .toObservable();
-                    }
-                })
+                .flatMap(albumId -> Observable.fromIterable(songList)
+                        .filter(song -> albumId == song.albumId)
+                        .toList()
+                        .toObservable())
                 .toList();
     }
 }

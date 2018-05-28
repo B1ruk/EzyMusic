@@ -180,14 +180,11 @@ public class NowPlayingPresenter {
     * */
     public void repeatModeListener(){
         compositeDisposable.add(
-                MediaReplayEventBus.getInstance().subscribe(new Consumer<Object>() {
-                    @Override
-                    public void accept(Object o) throws Exception {
-                        if (o instanceof RepeatPostEvent){
-                            Repeat repeatMode = ((RepeatPostEvent) o).getRepeatMode();
-                            System.out.println("from repeat mode"+repeatMode.toString());
-                            nowPlayingView.updateRepeatView(repeatMode);
-                        }
+                MediaReplayEventBus.getInstance().subscribe(o -> {
+                    if (o instanceof RepeatPostEvent){
+                        Repeat repeatMode = ((RepeatPostEvent) o).getRepeatMode();
+                        System.out.println("from repeat mode"+repeatMode.toString());
+                        nowPlayingView.updateRepeatView(repeatMode);
                     }
                 })
         );
@@ -199,17 +196,14 @@ public class NowPlayingPresenter {
     * */
     public void playPauseUpdater() {
         compositeDisposable.add(
-                MediaReplayEventBus.getInstance().subscribe(new Consumer<Object>() {
-                    @Override
-                    public void accept(Object o) throws Exception {
-                        if (o instanceof ChangePlayPauseEvent) {
-                            boolean playing = ((ChangePlayPauseEvent) o).isPlaying();
+                MediaReplayEventBus.getInstance().subscribe(o -> {
+                    if (o instanceof ChangePlayPauseEvent) {
+                        boolean playing = ((ChangePlayPauseEvent) o).isPlaying();
 
-                            if (playing)
-                                nowPlayingView.displayPauseIcon();
-                            else
-                                nowPlayingView.displayPlayIcon();
-                        }
+                        if (playing)
+                            nowPlayingView.displayPauseIcon();
+                        else
+                            nowPlayingView.displayPlayIcon();
                     }
                 })
         );

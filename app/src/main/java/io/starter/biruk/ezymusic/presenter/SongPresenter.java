@@ -40,13 +40,10 @@ public class SongPresenter {
 
 
     public void init() {
-        ReplayEventBus.getInstance().subscribe(new Consumer<Object>() {
-            @Override
-            public void accept(Object o) throws Exception {
-                if (o instanceof SelectedArtistEvent) {
-                    List<Song> songList = ((SelectedArtistEvent) o).getArtistSongs();
-                    setSongs(songList);
-                }
+        ReplayEventBus.getInstance().subscribe(o -> {
+            if (o instanceof SelectedArtistEvent) {
+                List<Song> songList = ((SelectedArtistEvent) o).getArtistSongs();
+                setSongs(songList);
             }
         });
     }
@@ -80,25 +77,19 @@ public class SongPresenter {
     }
 
     public void scrollListener(){
-        compositeDisposable.add(ReplayEventBus.getInstance().subscribe(new Consumer<Object>() {
-            @Override
-            public void accept(Object o) throws Exception {
-                if (o instanceof SongAdapterPositionEvent){
-                    int index = ((SongAdapterPositionEvent) o).getIndex();
-                    songView.scrollTo(index);
-                }
+        compositeDisposable.add(ReplayEventBus.getInstance().subscribe(o -> {
+            if (o instanceof SongAdapterPositionEvent){
+                int index = ((SongAdapterPositionEvent) o).getIndex();
+                songView.scrollTo(index);
             }
         }));
     }
 
     private void sortSongList(List<Song> songList) {
-        Collections.sort(songList, new Comparator<Song>() {
-            @Override
-            public int compare(Song lhs, Song rhs) {
-                String s1=lhs.title;
-                String s2=rhs.title;
-                return s1.compareTo(s2);
-            }
+        Collections.sort(songList, (lhs, rhs) -> {
+            String s1=lhs.title;
+            String s2=rhs.title;
+            return s1.compareTo(s2);
         });
     }
 

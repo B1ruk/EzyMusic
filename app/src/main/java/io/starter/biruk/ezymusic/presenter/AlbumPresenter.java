@@ -49,13 +49,10 @@ public class AlbumPresenter {
 
 
     public void init() {
-        ReplayEventBus.getInstance().subscribe(new Consumer<Object>() {
-            @Override
-            public void accept(Object o) throws Exception {
-                if (o instanceof SelectedArtistEvent) {
-                    List<Song> songList = ((SelectedArtistEvent) o).getArtistSongs();
-                    setArtistSongs(songList);
-                }
+        ReplayEventBus.getInstance().subscribe(o -> {
+            if (o instanceof SelectedArtistEvent) {
+                List<Song> songList = ((SelectedArtistEvent) o).getArtistSongs();
+                setArtistSongs(songList);
             }
         });
     }
@@ -105,24 +102,18 @@ public class AlbumPresenter {
     }
 
     private void sortAlbum(List<List<Song>> albumList) {
-        Collections.sort(albumList, new Comparator<List<Song>>() {
-            @Override
-            public int compare(List<Song> lhs, List<Song> rhs) {
-                String album1 = lhs.get(0).albumTitle;
-                String album2 = rhs.get(0).albumTitle;
-                return album1.compareTo(album2);
-            }
+        Collections.sort(albumList, (lhs, rhs) -> {
+            String album1 = lhs.get(0).albumTitle;
+            String album2 = rhs.get(0).albumTitle;
+            return album1.compareTo(album2);
         });
     }
 
     public void onAlbumSelected() {
-        compositeDisposable.add(RxEventBus.getInstance().subscribe(new Consumer<Object>() {
-            @Override
-            public void accept(Object o) throws Exception {
-                if (o instanceof AlbumSelectedEvent) {
-                    albumView.launchSelectedAlbumView();
-                    Log.i(TAG, "albumSelected");
-                }
+        compositeDisposable.add(RxEventBus.getInstance().subscribe(o -> {
+            if (o instanceof AlbumSelectedEvent) {
+                albumView.launchSelectedAlbumView();
+                Log.i(TAG, "albumSelected");
             }
         }));
     }
@@ -132,13 +123,10 @@ public class AlbumPresenter {
     }
 
     public void scrollToPosition() {
-        compositeDisposable.add(ReplayEventBus.getInstance().subscribe(new Consumer<Object>() {
-            @Override
-            public void accept(Object o) throws Exception {
-                if (o instanceof AlbumAdapterPositionEvent) {
-                    int index = ((AlbumAdapterPositionEvent) o).getIndex();
-                    albumView.scrollTo(index);
-                }
+        compositeDisposable.add(ReplayEventBus.getInstance().subscribe(o -> {
+            if (o instanceof AlbumAdapterPositionEvent) {
+                int index = ((AlbumAdapterPositionEvent) o).getIndex();
+                albumView.scrollTo(index);
             }
         }));
     }

@@ -45,23 +45,15 @@ public class SongDao implements SongRepository {
 
     @Override
     public Single<List<Song>> addSongs(final List<Song> songList) {
-        return Single.fromCallable(new Callable<List<Song>>() {
-            @Override
-            public List<Song> call() throws Exception {
-                addSongsToDB(songList);
-                return songList;
-            }
+        return Single.fromCallable(() -> {
+            addSongsToDB(songList);
+            return songList;
         });
     }
 
     @Override
     public Single<List<Song>> loadSongs() {
-        return Single.fromCallable(new Callable<List<Song>>() {
-            @Override
-            public List<Song> call() throws Exception {
-                return loadSongsFromDB();
-            }
-        });
+        return Single.fromCallable(() -> loadSongsFromDB());
     }
 
 

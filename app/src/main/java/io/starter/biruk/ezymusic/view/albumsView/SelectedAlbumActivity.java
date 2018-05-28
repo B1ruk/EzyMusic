@@ -63,17 +63,14 @@ public class SelectedAlbumActivity extends AppCompatActivity {
     }
 
     private void initViews() {
-        compositeDisposable.add(ReplayEventBus.getInstance().subscribe(new Consumer<Object>() {
-                    @Override
-                    public void accept(Object o) throws Exception {
-                        if (o instanceof SelectedAlbumEvent) {
-                            Log.i(TAG,"\tinitViews");
-                            List<Song> album = ((SelectedAlbumEvent) o).getAlbum();
-                            initRecyclerView(album);
-                            initToolBar(album);
-                        }
-                    }
-                })
+        compositeDisposable.add(ReplayEventBus.getInstance().subscribe(o -> {
+            if (o instanceof SelectedAlbumEvent) {
+                Log.i(TAG,"\tinitViews");
+                List<Song> album = ((SelectedAlbumEvent) o).getAlbum();
+                initRecyclerView(album);
+                initToolBar(album);
+            }
+        })
         );
     }
 
@@ -99,13 +96,10 @@ public class SelectedAlbumActivity extends AppCompatActivity {
     }
 
     private void sortAlbum(List<Song> album) {
-        Collections.sort(album, new Comparator<Song>() {
-            @Override
-            public int compare(Song lhs, Song rhs) {
-                int t1 = lhs.trackNumber;
-                int t2 = rhs.trackNumber;
-                return t1-t2;
-            }
+        Collections.sort(album, (lhs, rhs) -> {
+            int t1 = lhs.trackNumber;
+            int t2 = rhs.trackNumber;
+            return t1-t2;
         });
     }
 

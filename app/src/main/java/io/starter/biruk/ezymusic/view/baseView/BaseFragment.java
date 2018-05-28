@@ -37,16 +37,13 @@ public abstract class BaseFragment extends Fragment {
 
         showProgress();
 
-        compositeDisposable.add(ReplayEventBus.getInstance().subscribe(new Consumer<Object>() {
-                    @Override
-                    public void accept(Object o) throws Exception {
-                        if (o instanceof SongLoadCompletedEvent) {
-                            Log.i(TAG, "song load completed");
-                            hideProgress();
-                            init();
-                        }
-                    }
-                })
+        compositeDisposable.add(ReplayEventBus.getInstance().subscribe(o -> {
+            if (o instanceof SongLoadCompletedEvent) {
+                Log.i(TAG, "song load completed");
+                hideProgress();
+                init();
+            }
+        })
         );
 
 

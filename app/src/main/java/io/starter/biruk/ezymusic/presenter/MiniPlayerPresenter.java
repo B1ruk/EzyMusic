@@ -34,27 +34,24 @@ public class MiniPlayerPresenter {
     }
 
     public void updateMiniPlayer() {
-        ReplayEventBus.getInstance().subscribe(new Consumer<Object>() {
-            @Override
-            public void accept(Object o) throws Exception {
-                if (o instanceof SelectedSongQueueEvent) {
-                    index = ((SelectedSongQueueEvent) o).getIndex();
-                    songList = ((SelectedSongQueueEvent) o).getSongList();
+        ReplayEventBus.getInstance().subscribe(o -> {
+            if (o instanceof SelectedSongQueueEvent) {
+                index = ((SelectedSongQueueEvent) o).getIndex();
+                songList = ((SelectedSongQueueEvent) o).getSongList();
 
-
-                }
-
-                if (o instanceof SaveIndexEvent) {
-                    index = ((SaveIndexEvent) o).getIndex();
-                }
-
-                if (!songList.isEmpty()) {
-
-                    Song song = songList.get(index);
-                    miniView.updateUi(song);
-                }
 
             }
+
+            if (o instanceof SaveIndexEvent) {
+                index = ((SaveIndexEvent) o).getIndex();
+            }
+
+            if (!songList.isEmpty()) {
+
+                Song song = songList.get(index);
+                miniView.updateUi(song);
+            }
+
         });
 
     }
@@ -79,17 +76,14 @@ public class MiniPlayerPresenter {
     * */
     public void playPauseUpdater() {
         compositeDisposable.add(
-                MediaReplayEventBus.getInstance().subscribe(new Consumer<Object>() {
-                    @Override
-                    public void accept(Object o) throws Exception {
-                        if (o instanceof ChangePlayPauseEvent) {
-                            boolean playing = ((ChangePlayPauseEvent) o).isPlaying();
+                MediaReplayEventBus.getInstance().subscribe(o -> {
+                    if (o instanceof ChangePlayPauseEvent) {
+                        boolean playing = ((ChangePlayPauseEvent) o).isPlaying();
 
-                            if (playing)
-                                miniView.displayPauseIcon();
-                            else
-                                miniView.displayPlayIcon();
-                        }
+                        if (playing)
+                            miniView.displayPauseIcon();
+                        else
+                            miniView.displayPlayIcon();
                     }
                 })
         );
