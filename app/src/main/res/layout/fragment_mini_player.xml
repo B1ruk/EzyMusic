@@ -1,0 +1,55 @@
+<android.support.v7.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:id="@+id/mini_player_root"
+    tools:context="io.starter.biruk.ezymusic.view.miniView.MiniPlayerFragment">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/bb_inActiveBottomBarItemColor">
+
+        <ImageView
+            android:id="@+id/mini_song_cover_image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="4dp"
+            tools:src="@drawable/ic_songs"/>
+
+        <TextView
+            android:id="@+id/mini_song_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="16dp"
+            tools:text="song title"
+            android:textColor="@color/white"
+            android:textAppearance="?android:attr/textAppearance"
+            android:layout_toRightOf="@+id/mini_song_cover_image"/>
+
+
+        <TextView
+            android:id="@+id/mini_song_artist"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:layout_alignLeft="@+id/mini_song_title"
+            tools:text="song artist"
+            android:textColor="@color/white"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:layout_toRightOf="@+id/mini_song_cover_image"
+            android:layout_below="@+id/mini_song_title"/>
+
+
+        <ImageButton
+            android:id="@+id/mini_play_state"
+            android:layout_width="32dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:gravity="center"
+            android:src="@drawable/ic_pause_24dp"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_marginRight="8dp" />
+    </RelativeLayout>
+
+</android.support.v7.widget.CardView>

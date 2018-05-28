@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:id="@+id/root_layout"
+    tools:context=".view.mainView.MainActivity">
+
+    <include
+        android:id="@+id/main_toolbar"
+        layout="@layout/app_bar" />
+
+    <FrameLayout
+        android:id="@+id/fragment_container"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.64"
+        />
+
+    <FrameLayout
+        android:id="@+id/mini_player"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.12"
+        />
+
+    <com.roughike.bottombar.BottomBar
+        android:id="@+id/bottom_bar"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.14"
+        app:bb_activeTabColor="@color/bottomBarActive"
+        app:bb_inActiveTabColor="@color/bottomBarInActive"
+        app:bb_tabXmlResource="@xml/bottom_bar_tabs"
+        app:bb_behavior="underNavbar"
+        ></com.roughike.bottombar.BottomBar>
+
+</LinearLayout>

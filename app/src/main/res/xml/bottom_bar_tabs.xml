@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<tabs>
+    <tab
+        id="@+id/bottom_nav_songs"
+        badgeHidesWhenActive="true"
+        title="songs"
+        icon="@drawable/ic_songs"
+        />
+
+    <tab
+        id="@+id/bottom_nav_artists"
+        icon="@drawable/artist_icon"
+        title="artists"
+        badgeHidesWhenActive="true"
+        />
+
+    <tab
+        id="@+id/bottom_nav_albums"
+        title="albums"
+        icon="@drawable/albums_icon"
+        badgeHidesWhenActive="true"
+        />
+
+    <tab
+        id="@+id/bottom_nav_playlists"
+        title="playlists"
+        icon="@drawable/ic_playlist_play"
+        badgeHidesWhenActive="true"
+        />
+
+
+</tabs>

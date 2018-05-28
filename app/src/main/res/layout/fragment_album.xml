@@ -1,0 +1,32 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/album_root_layout"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context="io.starter.biruk.ezymusic.view.albumsView.AlbumFragment">
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/album_recyclerview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:listitem="@layout/cardview_album"
+        />
+    <io.starter.biruk.ezymusic.util.widgets.fastscroller.FastScroller
+        android:id="@+id/album_fast_Scroller"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_alignBottom="@+id/song_list_recycler"
+        android:layout_alignTop="@+id/song_list_recycler"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        ></io.starter.biruk.ezymusic.util.widgets.fastscroller.FastScroller>
+
+
+    <ImageView
+        android:id="@+id/empty_album_list_image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+</RelativeLayout>

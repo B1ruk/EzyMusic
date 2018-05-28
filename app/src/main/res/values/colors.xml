@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorAccent">#FF4081</color>
+    
+    <color name="toolbarBackground">#F6F6F6</color>
+
+    <color name="bottomBarActive">#d42c2c</color>
+    <color name="bottomBarInActive">#00000F</color>
+
+    <color name="white">#ffffff</color>
+    <color name="rippleColor">#c9dede</color>
+
+    <color name="bottom_view_now_playing_color">#bdbdbd</color>
+
+</resources>

@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Ezy Music</string>
+    <string name="search">search</string>
+    <string name="delete">delete</string>
+    <string name="share">share</string>
+
+    <string name="favorites">FAVORITES</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+</resources>

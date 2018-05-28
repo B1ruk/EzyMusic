@@ -1,0 +1,38 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:id="@+id/root_playlist_view"
+    tools:context="io.starter.biruk.ezymusic.view.playlistView.PlaylistFragment">
+
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/favorites"
+        android:textStyle="bold"
+        android:fontFamily="monospace"
+        android:textAppearance="?android:textAppearance"
+        android:layout_margin="16dp"
+        />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <include
+            android:id="@+id/favorite_container"
+            layout="@layout/favorite_view_content"
+            />
+        <FrameLayout
+            android:id="@+id/favorite_song_list_container"
+            android:layout_width="match_parent"
+            android:layout_margin="10dp"
+            android:background="@color/bb_inActiveBottomBarItemColor"
+            android:visibility="gone"
+            tools:visibility="visible"
+            android:layout_height="wrap_content"></FrameLayout>
+    </RelativeLayout>
+
+</LinearLayout>

@@ -1,0 +1,57 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="io.starter.biruk.ezymusic.view.nowplayingView.nowPlayingViewFragment.NowPlayingFragment">
+
+    <LinearLayout
+        android:id="@+id/lyrics_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/colorPrimary"
+        android:orientation="vertical"
+        android:visibility="gone"
+        >
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/lyrics_text_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        </ScrollView>
+
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/current_song_large_image_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_margin="18dp"
+        android:layout_centerInParent="true" />
+
+    <FrameLayout
+        android:id="@+id/current_time_view_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        android:alpha="0.6"
+        android:background="@color/bb_darkBackgroundColor">
+        <TextView
+            android:id="@+id/elapsed_time_on_drag_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:textAppearance="?android:textAppearanceLarge"
+            android:textSize="36sp"
+            android:textColor="@color/white"
+            android:visibility="gone"
+            tools:text="3:24"
+            tools:visibility="visible"
+
+            />
+    </FrameLayout>
+
+</RelativeLayout>

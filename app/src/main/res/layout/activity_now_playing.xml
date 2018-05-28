@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:id="@+id/now_playing_root_view"
+    tools:context="io.starter.biruk.ezymusic.view.nowplayingView.NowPlayingActivity">
+
+    <include
+        android:id="@+id/now_playing_top_view"
+        layout="@layout/cardview_now_playing_top_view"
+        />
+
+    <FrameLayout
+        android:id="@+id/now_playing_main_view_container"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.64"/>
+
+    <include
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.25"
+        layout="@layout/media_control_view"
+        />
+
+    <include
+        layout="@layout/now_playing_bottom_view"
+        />
+
+</LinearLayout>
