@@ -8,6 +8,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Bitmap;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Binder;
@@ -44,6 +45,7 @@ import io.starter.biruk.ezymusic.model.entity.Song;
 import io.starter.biruk.ezymusic.service.playbackMode.PlayState;
 import io.starter.biruk.ezymusic.service.playbackMode.Repeat;
 import io.starter.biruk.ezymusic.service.playbackMode.Shuffle;
+import io.starter.biruk.ezymusic.util.AlbumArtworkUtil;
 import io.starter.biruk.ezymusic.util.SongFormatUtil;
 import io.starter.biruk.ezymusic.view.mainView.MainActivity;
 
@@ -83,6 +85,8 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
 
 
     private CompositeDisposable mediaServiceCompositeDisposable;
+
+    private AlbumArtworkUtil albumArtworkUtil;
 
 
     /*
@@ -135,7 +139,7 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
         registerBecomingNoisyReciever();
 
         this.songFormatUtil = new SongFormatUtil(this);
-        songNotificationCompat = NotificationManagerCompat.from(this);
+        this.albumArtworkUtil=new AlbumArtworkUtil(this,songFormatUtil);
     }
 
     private void playBackModeListener() {
@@ -194,6 +198,11 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
         mLargeContentView.setTextViewText(R.id.remote_song_title, title);
         mLargeContentView.setTextViewText(R.id.remote_song_artist, artist);
         mLargeContentView.setImageViewResource(R.id.remote_play_state, playPauseIcon);
+
+        Bitmap bitMap = albumArtworkUtil.getBitMap(song.albumId);
+        if (bitMap!=null){
+            mLargeContentView.setImageViewBitmap(R.id.remote_song_cover_image,bitMap);
+        }
     }
 
     public PendingIntent getPendingIntent(PlayState playState) {
