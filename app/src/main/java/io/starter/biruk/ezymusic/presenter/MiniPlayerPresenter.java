@@ -13,6 +13,7 @@ import io.starter.biruk.ezymusic.events.SelectedSongQueueEvent;
 import io.starter.biruk.ezymusic.events.media.ChangePlayPauseEvent;
 import io.starter.biruk.ezymusic.events.media.PlayEvent;
 import io.starter.biruk.ezymusic.events.media.SaveIndexEvent;
+import io.starter.biruk.ezymusic.events.media.TrackChangeEvent;
 import io.starter.biruk.ezymusic.model.entity.Song;
 import io.starter.biruk.ezymusic.view.miniView.MiniView;
 
@@ -38,8 +39,6 @@ public class MiniPlayerPresenter {
             if (o instanceof SelectedSongQueueEvent) {
                 index = ((SelectedSongQueueEvent) o).getIndex();
                 songList = ((SelectedSongQueueEvent) o).getSongList();
-
-
             }
 
             if (o instanceof SaveIndexEvent) {
@@ -57,7 +56,7 @@ public class MiniPlayerPresenter {
     }
 
     /*
-    * listenes for play event and calls the appropraiate view
+    * listens for play event and calls the appropriate view
     * */
     public void playListener() {
         RxEventBus.getInstance().subscribe(new Consumer<Object>() {
@@ -87,6 +86,29 @@ public class MiniPlayerPresenter {
                     }
                 })
         );
+    }
+
+    /*
+    * updates the view when previous or next buttons
+    * are triggered from the notification
+    * */
+    public void trackChangeListener(){
+        compositeDisposable.add(
+                MediaReplayEventBus.getInstance().subscribe(o->{
+                    if (o instanceof TrackChangeEvent){
+                        int index = ((TrackChangeEvent) o).getIndex();
+                        List<Song> songs = ((TrackChangeEvent) o).getSongs();
+
+                        updateQueue(index,songs);
+                        miniView.updateUi(songs.get(index));
+                    }
+                })
+        );
+    }
+
+    private void updateQueue(int index, List<Song> songs) {
+        this.index=index;
+        this.songList=songs;
     }
 
     public void saveIndex(){

@@ -133,6 +133,7 @@ public class MiniPlayerFragment extends Fragment implements MiniView {
         miniPlayerCardView.setVisibility(View.GONE);
         miniPlayerPresenter.updateMiniPlayer();
         miniPlayerPresenter.playPauseUpdater();
+        miniPlayerPresenter.trackChangeListener();
     }
 
     @Override
