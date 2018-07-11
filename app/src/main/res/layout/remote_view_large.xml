@@ -6,8 +6,8 @@
 
     <ImageView
         android:id="@+id/remote_song_cover_image"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="90dp"
+        android:layout_height="90dp"
         android:padding="4dp"
         tools:src="@drawable/ic_songs" />
 
@@ -16,7 +16,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="16dp"
-        android:layout_toRightOf="@+id/remote_song_cover_image"
+        android:layout_toEndOf="@+id/remote_song_cover_image"
         android:textAppearance="?android:attr/textAppearance"
         android:textColor="@color/white"
         tools:text="song title" />
@@ -38,6 +38,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/remote_song_artist"
+        android:layout_marginTop="4dp"
+        android:layout_toEndOf="@+id/remote_song_cover_image"
         android:gravity="center_horizontal"
         android:orientation="horizontal">
 
@@ -47,7 +49,6 @@
             style="?android:attr/borderlessButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
             android:layout_marginRight="8dp"
             android:gravity="center"
             android:src="@android:drawable/ic_media_previous" />
