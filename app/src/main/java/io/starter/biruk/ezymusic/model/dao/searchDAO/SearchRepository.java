@@ -3,6 +3,7 @@ package io.starter.biruk.ezymusic.model.dao.searchDAO;
 import java.util.List;
 
 import io.reactivex.Observable;
+import io.reactivex.Single;
 import io.starter.biruk.ezymusic.model.entity.Song;
 
 /**
@@ -10,5 +11,5 @@ import io.starter.biruk.ezymusic.model.entity.Song;
  */
 public interface SearchRepository {
 
-    Observable<List<Song>> searchResults(String query);
+    Observable<List<Song>> searchLibrary(String query);
 }

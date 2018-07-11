@@ -5,9 +5,7 @@ import android.content.Context;
 import java.util.List;
 
 import io.reactivex.Observable;
-import io.reactivex.annotations.NonNull;
-import io.reactivex.functions.Consumer;
-import io.reactivex.functions.Predicate;
+import io.reactivex.Single;
 import io.starter.biruk.ezymusic.bus.ReplayEventBus;
 import io.starter.biruk.ezymusic.events.SongLoadCompletedEvent;
 import io.starter.biruk.ezymusic.model.dao.songDao.SongDao;
@@ -16,13 +14,11 @@ import io.starter.biruk.ezymusic.model.entity.Song;
 /**
  * Created by Biruk on 10/13/2017.
  */
-public class SearchDAO extends SongDao implements SearchRepository {
+public class SearchDAO implements SearchRepository {
 
     private List<Song> songs;
 
-    public SearchDAO(Context appContext) {
-        super(appContext);
-
+    public SearchDAO() {
         init();
     }
 
@@ -36,12 +32,17 @@ public class SearchDAO extends SongDao implements SearchRepository {
     }
 
     @Override
-    public Observable<List<Song>> searchResults(final String query) {
+    public Observable<List<Song>> searchLibrary(String query) {
+        return Observable.just(query)
+                .filter(q -> q.length() > 2)
+                .map(String::toLowerCase)
+                .flatMap(searchQuery -> searchResults(query));
+    }
 
-        String searchQuery = query.toLowerCase();
+    private Observable<List<Song>> searchResults(final String query) {
 
-        return Observable.fromIterable(this.songs)
-                .filter(song -> searchSong(searchQuery, song))
+        return Observable.fromIterable(songs)
+                .filter(song -> searchSong(query, song))
                 .toList()
                 .toObservable();
 
