@@ -28,7 +28,7 @@ public class SearchDAO extends SongDao implements SearchRepository {
 
     private void init() {
         ReplayEventBus.getInstance().subscribe(o -> {
-            if (o instanceof SongLoadCompletedEvent){
+            if (o instanceof SongLoadCompletedEvent) {
                 List<Song> songList = ((SongLoadCompletedEvent) o).getSongList();
                 setSongs(songList);
             }
@@ -37,18 +37,22 @@ public class SearchDAO extends SongDao implements SearchRepository {
 
     @Override
     public Observable<List<Song>> searchResults(final String query) {
+
+        String searchQuery = query.toLowerCase();
+
         return Observable.fromIterable(this.songs)
-                .filter(searchSong(query))
+                .filter(song -> searchSong(searchQuery, song))
                 .toList()
                 .toObservable();
 
     }
 
-    @android.support.annotation.NonNull
-    private Predicate<Song> searchSong(String query) {
-        return song -> song.artist.contains(query) ||
-                song.title.contains(query) ||
-                song.albumTitle.contains(query);
+    private boolean searchSong(String query, Song song) {
+        boolean titleMatch = song.title.toLowerCase().contains(query);
+        boolean artistMath = song.artist.toLowerCase().contains(query);
+        boolean albumMatch = song.albumTitle.toLowerCase().contains(query);
+
+        return titleMatch || artistMath || albumMatch;
     }
 
     private void setSongs(List<Song> songs) {
