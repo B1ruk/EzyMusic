@@ -49,6 +49,10 @@ import io.starter.biruk.ezymusic.util.AlbumArtworkUtil;
 import io.starter.biruk.ezymusic.util.SongFormatUtil;
 import io.starter.biruk.ezymusic.view.mainView.MainActivity;
 
+import static io.starter.biruk.ezymusic.service.playbackMode.PlayState.NEXT;
+import static io.starter.biruk.ezymusic.service.playbackMode.PlayState.PLAY_PAUSE;
+import static io.starter.biruk.ezymusic.service.playbackMode.PlayState.PREVIOUS;
+
 /**
  * Created by Biruk on 10/20/2017.
  */
@@ -83,14 +87,19 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
     private NotificationManagerCompat songNotificationCompat;
     private RemoteViews mLargeContentView = null;
 
-
     private CompositeDisposable mediaServiceCompositeDisposable;
-
     private AlbumArtworkUtil albumArtworkUtil;
+
+    private final BroadcastReceiver mediaIntentReciever = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            handleMediaCommandIntent(intent);
+        }
+    };
 
 
     /*
-    *  subscriber that listenes for ToggleEvent and toggles the media playbac
+    *  subscriber that listens for ToggleEvent and toggles the media playback
     * */
     private Disposable playPauseToggle = RxEventBus.getInstance().subscribe(o -> {
         if (o instanceof TogglePlayEvent) {
@@ -138,8 +147,28 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
 
         registerBecomingNoisyReciever();
 
+        initMediaReciever();
+
         this.songFormatUtil = new SongFormatUtil(this);
-        this.albumArtworkUtil=new AlbumArtworkUtil(this,songFormatUtil);
+        this.albumArtworkUtil = new AlbumArtworkUtil(this, songFormatUtil);
+    }
+
+    private void initMediaReciever() {
+        final IntentFilter filter = new IntentFilter();
+        filter.addAction(PlayState.PREVIOUS);
+        filter.addAction(NEXT);
+        filter.addAction(PlayState.PLAY_PAUSE);
+
+        registerReceiver(mediaIntentReciever, filter);
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+
+        if (intent != null) {
+            handleMediaCommandIntent(intent);
+        }
+        return START_NOT_STICKY;
     }
 
     private void playBackModeListener() {
@@ -148,7 +177,7 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
     }
 
     public void updateNotification() {
-        startForeground(NOTIFICATION_ID,buildNotification());
+        startForeground(NOTIFICATION_ID, buildNotification());
     }
 
     public Notification buildNotification() {
@@ -179,7 +208,15 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
     private void initRemoteView(RemoteViews mLargeContentView) {
         mLargeContentView.setOnClickPendingIntent(R.id.remote_previous, getPendingIntent(PlayState.PREVIOUS));
         mLargeContentView.setOnClickPendingIntent(R.id.remote_play_state, getPendingIntent(PlayState.PLAY_PAUSE));
-        mLargeContentView.setOnClickPendingIntent(R.id.remote_next, getPendingIntent(PlayState.NEXT));
+        mLargeContentView.setOnClickPendingIntent(R.id.remote_next, getPendingIntent(NEXT));
+    }
+
+    private PendingIntent getPendingIntent(String playState) {
+        final ComponentName serviceName = new ComponentName(this, PlayBackService.class);
+        Intent intent = new Intent(playState);
+        intent.setComponent(serviceName);
+
+        return PendingIntent.getService(this, 0, intent, 0);
     }
 
     private void updateRemoteView(RemoteViews mLargeContentView) {
@@ -194,18 +231,33 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
         mLargeContentView.setImageViewResource(R.id.remote_play_state, playPauseIcon);
 
         Bitmap bitMap = albumArtworkUtil.getBitMap(song.albumId);
-        if (bitMap!=null){
-            mLargeContentView.setImageViewBitmap(R.id.remote_song_cover_image,bitMap);
+        if (bitMap != null) {
+            mLargeContentView.setImageViewBitmap(R.id.remote_song_cover_image, bitMap);
         }
     }
 
-    public PendingIntent getPendingIntent(PlayState playState) {
-        final ComponentName serviceName = new ComponentName(this, PlayBackService.class);
-        Intent intent = new Intent(playState.toString());
-        intent.setComponent(serviceName);
 
-        return PendingIntent.getService(this, 0, intent, 0);
+    private void handleMediaCommandIntent(Intent intent) {
+        String action = intent.getAction();
+        Log.d(TAG, String.format("in handleMediaCmdInt -->  %s", action));
+
+        switch (action){
+            case PLAY_PAUSE:
+                if (isPlaying()){
+                    pause();
+                }else {
+                    resume();
+                }
+                updateNotification();
+                break;
+            case PREVIOUS:
+                break;
+            case NEXT:
+                break;
+        }
+
     }
+
 
     /*
     * listens for shuffle mode event,then toggles the shuffle state
