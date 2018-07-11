@@ -148,8 +148,6 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
     }
 
     public void updateNotification() {
-//        songNotificationCompat.notify(NOTIFICATION_ID, buildNotification());
-
         startForeground(NOTIFICATION_ID,buildNotification());
     }
 
@@ -179,10 +177,6 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
     }
 
     private void initRemoteView(RemoteViews mLargeContentView) {
-//        mLargeContentView.setImageViewResource(R.id.remote_previous,android.R.drawable.ic_media_previous);
-//        mLargeContentView.setImageViewResource(R.id.remote_play_state,android.R.drawable.ic_media_pause);
-//        mLargeContentView.setImageViewResource(R.id.remote_next,android.R.drawable.ic_media_next);
-
         mLargeContentView.setOnClickPendingIntent(R.id.remote_previous, getPendingIntent(PlayState.PREVIOUS));
         mLargeContentView.setOnClickPendingIntent(R.id.remote_play_state, getPendingIntent(PlayState.PLAY_PAUSE));
         mLargeContentView.setOnClickPendingIntent(R.id.remote_next, getPendingIntent(PlayState.NEXT));
@@ -208,6 +202,7 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
     public PendingIntent getPendingIntent(PlayState playState) {
         final ComponentName serviceName = new ComponentName(this, PlayBackService.class);
         Intent intent = new Intent(playState.toString());
+        intent.setComponent(serviceName);
 
         return PendingIntent.getService(this, 0, intent, 0);
     }
@@ -357,7 +352,7 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
             mediaPlayer.start();
 
             /*
-            * this event is useful for udpating the play/pause event
+            * this event is useful for updating the play/pause event
             * */
             MediaReplayEventBus.getInstance().post(new ChangePlayPauseEvent(mediaPlayer.isPlaying()));
         }
@@ -390,11 +385,6 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
             mediaPlayer.seekTo(progress);
         }
     }
-
-    public long getCurrentPosition() {
-        return mediaPlayer.getCurrentPosition();
-    }
-
 
     @Override
     public void onAudioFocusChange(int focusChange) {
@@ -454,7 +444,6 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
 
     private void updateCurrentPosition() {
         while (mediaPlayer != null) {
-            int currentPosition = mediaPlayer.getCurrentPosition();
             try {
                 broadcastCurrentPosition();
                 Thread.sleep(500);
