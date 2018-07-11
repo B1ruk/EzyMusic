@@ -38,12 +38,17 @@ public class SearchDAO extends SongDao implements SearchRepository {
     @Override
     public Observable<List<Song>> searchResults(final String query) {
         return Observable.fromIterable(this.songs)
-                .filter(song -> song.artist.contains(query) ||
-                        song.title.contains(query) ||
-                        song.albumTitle.contains(query)).toList()
+                .filter(searchSong(query))
+                .toList()
                 .toObservable();
 
+    }
 
+    @android.support.annotation.NonNull
+    private Predicate<Song> searchSong(String query) {
+        return song -> song.artist.contains(query) ||
+                song.title.contains(query) ||
+                song.albumTitle.contains(query);
     }
 
     private void setSongs(List<Song> songs) {
