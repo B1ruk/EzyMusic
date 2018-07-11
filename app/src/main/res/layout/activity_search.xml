@@ -12,11 +12,11 @@
         android:id="@+id/main_search_toolbar"
         layout="@layout/app_bar" />
 
-    <LinearLayout
+    <RelativeLayout
         android:id="@+id/search_reults"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        >
         <android.support.v7.widget.RecyclerView
             android:id="@+id/song_search_list_recycler"
             android:layout_width="match_parent"
@@ -37,7 +37,7 @@
             android:layout_alignParentEnd="true"
             ></io.starter.biruk.ezymusic.util.widgets.fastscroller.FastScroller>
 
-    </LinearLayout>
+    </RelativeLayout>
 
     <LinearLayout
         android:id="@+id/search_info"
