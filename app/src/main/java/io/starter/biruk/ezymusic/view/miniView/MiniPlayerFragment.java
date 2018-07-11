@@ -17,7 +17,6 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
 
@@ -31,7 +30,6 @@ import io.starter.biruk.ezymusic.presenter.MiniPlayerPresenter;
 import io.starter.biruk.ezymusic.service.PlayBackService;
 import io.starter.biruk.ezymusic.util.ImageTransform.CircleTransform;
 import io.starter.biruk.ezymusic.util.SongFormatUtil;
-import io.starter.biruk.ezymusic.util.ViewAnimatiorUtil;
 import io.starter.biruk.ezymusic.view.nowplayingView.NowPlayingActivity;
 
 /**
@@ -55,7 +53,6 @@ public class MiniPlayerFragment extends Fragment implements MiniView {
 
     private SongFormatUtil songFormatUtil;
 
-    //needed for playbackService
     private PlayBackService playBackService;
 
     //used for checking whether the service is bound or not
@@ -88,7 +85,6 @@ public class MiniPlayerFragment extends Fragment implements MiniView {
         super.onCreate(savedInstanceState);
 
         songFormatUtil = new SongFormatUtil(getContext());
-
         miniPlayerPresenter = new MiniPlayerPresenter(this);
 
         if (!serviceBound) {
@@ -102,7 +98,6 @@ public class MiniPlayerFragment extends Fragment implements MiniView {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_mini_player, container, false);
 
         artworkView = (ImageView) view.findViewById(R.id.mini_song_cover_image);
@@ -119,12 +114,7 @@ public class MiniPlayerFragment extends Fragment implements MiniView {
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        miniPlayerCardView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                miniPlayerPresenter.launchNowPlayingView();
-            }
-        });
+        miniPlayerCardView.setOnClickListener(v -> miniPlayerPresenter.launchNowPlayingView());
     }
 
     @Override
@@ -141,12 +131,8 @@ public class MiniPlayerFragment extends Fragment implements MiniView {
         playPauseToggle();
 
         miniPlayerCardView.setVisibility(View.GONE);
-
         miniPlayerPresenter.updateMiniPlayer();
-
         miniPlayerPresenter.playPauseUpdater();
-
-
     }
 
     @Override
@@ -181,6 +167,7 @@ public class MiniPlayerFragment extends Fragment implements MiniView {
             Log.i(TAG, "play");
             playBackService.setQueue(index, songList);
             playBackService.play();
+            playBackService.updateNotification();
         }
     }
 
@@ -194,12 +181,7 @@ public class MiniPlayerFragment extends Fragment implements MiniView {
 
     @Override
     public void playPauseToggle() {
-        playPauseBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                RxEventBus.getInstance().publish(new TogglePlayEvent());
-            }
-        });
+        playPauseBtn.setOnClickListener(v -> RxEventBus.getInstance().publish(new TogglePlayEvent()));
     }
 
     @Override
