@@ -27,7 +27,7 @@ public class SearchPresenter {
 
 
     public void loadSearchResults(String query){
-        searchRepository.searchResults(query)
+        searchRepository.searchLibrary(query)
                 .subscribeOn(Schedulers.io())
                 .observeOn(mainThread)
                 .subscribeWith(new DisposableObserver<List<Song>>() {

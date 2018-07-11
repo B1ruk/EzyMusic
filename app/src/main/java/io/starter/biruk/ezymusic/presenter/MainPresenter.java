@@ -24,25 +24,22 @@ public class MainPresenter {
     private SongStorageUtil songStorageUtil;
     private MainView mainView;
     private SongRepository songsRepository;
-    private SearchRepository searchRepository;
     private Scheduler schedulerIO;
     private Scheduler mainThread;
 
 
-    public MainPresenter(SongStorageUtil songStorageUtil,MainView mainView, SongRepository songsRepository,
-                         SearchRepository searchRepository,
+    public MainPresenter(SongStorageUtil songStorageUtil, MainView mainView, SongRepository songsRepository,
                          Scheduler schedulers, Scheduler mainThread) {
         this.songStorageUtil = songStorageUtil;
         this.mainView = mainView;
         this.songsRepository = songsRepository;
-        this.searchRepository = searchRepository;
         this.schedulerIO = schedulers;
         this.mainThread = mainThread;
     }
 
     public void fetchSongs() {
 
-        List<Song> songs =songStorageUtil.fetchFromCard();
+        List<Song> songs = songStorageUtil.fetchFromCard();
         songsRepository.addSongs(songs)
                 .subscribeOn(schedulerIO)
                 .observeOn(mainThread)
@@ -59,27 +56,4 @@ public class MainPresenter {
                 });
     }
 
-    public void searchSong(String query){
-        searchRepository.searchResults(query)
-                .subscribeOn(schedulerIO)
-                .observeOn(mainThread)
-                .subscribeWith(new DisposableObserver<List<Song>>() {
-                    @Override
-                    public void onNext(@NonNull List<Song> songs) {
-                        for (Song song:songs){
-                            Log.i("\t",song.title);
-                        }
-                    }
-
-                    @Override
-                    public void onError(@NonNull Throwable e) {
-
-                    }
-
-                    @Override
-                    public void onComplete() {
-
-                    }
-                });
-    }
 }
