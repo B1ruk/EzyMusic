@@ -4,7 +4,7 @@
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:allowBackup="true"
@@ -21,16 +21,15 @@
         </activity>
         <activity android:name=".view.nowplayingView.NowPlayingActivity" />
         <activity android:name=".view.albumsView.SelectedAlbumActivity" />
-        <activity android:name=".view.artistsView.SelectedArtistActivity"></activity>
+        <activity android:name=".view.artistsView.SelectedArtistActivity" />
 
         <service
             android:name=".service.PlayBackService"
-            android:exported="false"
             android:enabled="true"
-            />
+            android:exported="false" />
+        <service android:name=".service.ImageDownloaderService" />
 
-        <service android:name=".service.ImageDownloaderService"/>
-
+        <activity android:name=".view.searchView.SearchActivity"></activity>
     </application>
 
 </manifest>
