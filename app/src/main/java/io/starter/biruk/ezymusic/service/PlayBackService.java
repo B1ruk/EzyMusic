@@ -1,7 +1,10 @@
 package io.starter.biruk.ezymusic.service;
 
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -10,9 +13,11 @@ import android.media.MediaPlayer;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.PowerManager;
-import android.support.annotation.Nullable;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.widget.RemoteViews;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -21,12 +26,11 @@ import java.util.List;
 
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.functions.Consumer;
+import io.starter.biruk.ezymusic.R;
 import io.starter.biruk.ezymusic.bus.ReplayEventBus;
 import io.starter.biruk.ezymusic.bus.RxEventBus;
 import io.starter.biruk.ezymusic.bus.media.MediaReplayEventBus;
 import io.starter.biruk.ezymusic.bus.media.MediaRxEventBus;
-import io.starter.biruk.ezymusic.events.SelectedSongQueueEvent;
 import io.starter.biruk.ezymusic.events.media.ChangePlayPauseEvent;
 import io.starter.biruk.ezymusic.events.media.PlayTrackEvent;
 import io.starter.biruk.ezymusic.events.media.SaveIndexEvent;
@@ -37,8 +41,11 @@ import io.starter.biruk.ezymusic.events.media.playbackMode.RepeatToggleEvent;
 import io.starter.biruk.ezymusic.events.media.playbackMode.ShufflePostEvent;
 import io.starter.biruk.ezymusic.events.media.playbackMode.ShuffleToggleEvent;
 import io.starter.biruk.ezymusic.model.entity.Song;
+import io.starter.biruk.ezymusic.service.playbackMode.PlayState;
 import io.starter.biruk.ezymusic.service.playbackMode.Repeat;
 import io.starter.biruk.ezymusic.service.playbackMode.Shuffle;
+import io.starter.biruk.ezymusic.util.SongFormatUtil;
+import io.starter.biruk.ezymusic.view.mainView.MainActivity;
 
 /**
  * Created by Biruk on 10/20/2017.
@@ -50,6 +57,7 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
 
     public static final String CURRENT_POSITION = "io.starter.biruk.ezymusic.service";
     public static final String CURRENT_POSITION_INTENT_KEY = "io.starter.biruk.ezymusic.service.KEY";
+    private static final int NOTIFICATION_ID = 3870;
 
     /*
     * a broadcast manager for handling the CURRENT_POSITION
@@ -61,26 +69,56 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
     private AudioManager audioManager;
     private MediaPlayer mediaPlayer;
 
+    private SongFormatUtil songFormatUtil;
 
-    /*
-    * the current index & song list
-    *
-    * */
     private int index;
     private List<Song> songList;
 
-    /*
-    * for managing shuffle mode
-    * */
     private Shuffle shuffle;
 
-    /*
-    * for managing repeat mode
-    * */
     private Repeat repeat;
+
+    private NotificationManagerCompat songNotificationCompat;
+    private RemoteViews mLargeContentView = null;
 
 
     private CompositeDisposable mediaServiceCompositeDisposable;
+
+
+    /*
+    *  subscriber that listenes for ToggleEvent and toggles the media playbac
+    * */
+    private Disposable playPauseToggle = RxEventBus.getInstance().subscribe(o -> {
+        if (o instanceof TogglePlayEvent) {
+            if (isPlaying()) {
+                pause();
+            } else {
+                resume();
+            }
+            updateNotification();
+        }
+    });
+
+    /*
+    * subscriber that listens for play event and plays the specified track by using
+    * the index that it received from the event publisher
+    * */
+    private Disposable playTrack = RxEventBus.getInstance().subscribe(o -> {
+        if (o instanceof PlayTrackEvent) {
+            int index1 = ((PlayTrackEvent) o).getIndex();
+            setIndex(index1);
+            play();
+            updateNotification();
+        }
+    });
+
+    private Disposable seekTo = MediaRxEventBus.getInstance().subscribe(o -> {
+        if (o instanceof SeekToEvent) {
+            int index1 = ((SeekToEvent) o).getIndex();
+            seekTo(index1);
+        }
+    });
+
 
     @Override
     public void onCreate() {
@@ -95,11 +133,74 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
         playBackModeListener();
 
         registerBecomingNoisyReciever();
+
+        this.songFormatUtil = new SongFormatUtil(this);
+        songNotificationCompat = NotificationManagerCompat.from(this);
     }
 
     private void playBackModeListener() {
         repeatModeListener();
         shuffleModeListener();
+    }
+
+    public void updateNotification() {
+//        songNotificationCompat.notify(NOTIFICATION_ID, buildNotification());
+
+        startForeground(NOTIFICATION_ID,buildNotification());
+    }
+
+    public Notification buildNotification() {
+        Intent nowPlayingIntent = new Intent(this, MainActivity.class);
+
+        PendingIntent clickIntent = PendingIntent.getActivity(this, 0, nowPlayingIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        Notification notification = new NotificationCompat.Builder(this)
+                .setSmallIcon(android.R.drawable.stat_sys_headset)
+                .setContentIntent(clickIntent)
+                .setCustomBigContentView(setUpBigContentView())
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setOngoing(true)
+                .build();
+
+        return notification;
+    }
+
+    private RemoteViews setUpBigContentView() {
+        if (this.mLargeContentView == null) {
+            this.mLargeContentView = new RemoteViews(getPackageName(), R.layout.remote_view_large);
+            initRemoteView(mLargeContentView);
+        }
+        updateRemoteView(mLargeContentView);
+        return mLargeContentView;
+    }
+
+    private void initRemoteView(RemoteViews mLargeContentView) {
+//        mLargeContentView.setImageViewResource(R.id.remote_previous,android.R.drawable.ic_media_previous);
+//        mLargeContentView.setImageViewResource(R.id.remote_play_state,android.R.drawable.ic_media_pause);
+//        mLargeContentView.setImageViewResource(R.id.remote_next,android.R.drawable.ic_media_next);
+
+        mLargeContentView.setOnClickPendingIntent(R.id.remote_previous, getPendingIntent(PlayState.PREVIOUS));
+        mLargeContentView.setOnClickPendingIntent(R.id.remote_play_state, getPendingIntent(PlayState.PLAY_PAUSE));
+        mLargeContentView.setOnClickPendingIntent(R.id.remote_next, getPendingIntent(PlayState.NEXT));
+    }
+
+    private void updateRemoteView(RemoteViews mLargeContentView) {
+        Song song = songList.get(index);
+        String title = songFormatUtil.formatString(song.title, 24);
+        String artist = songFormatUtil.formatString(song.artist, 16);
+
+        int playPauseIcon = isPlaying() ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play;
+
+        mLargeContentView.setTextViewText(R.id.remote_song_title, title);
+        mLargeContentView.setTextViewText(R.id.remote_song_artist, artist);
+        mLargeContentView.setImageViewResource(R.id.remote_play_state, playPauseIcon);
+    }
+
+    public PendingIntent getPendingIntent(PlayState playState) {
+        final ComponentName serviceName = new ComponentName(this, PlayBackService.class);
+        Intent intent = new Intent(playState.toString());
+
+        return PendingIntent.getService(this, 0, intent, 0);
     }
 
     /*
@@ -305,6 +406,7 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
                 //do not modify the index just play the current song
             }
             play();
+            updateNotification();
             ReplayEventBus.getInstance().post(new SaveIndexEvent(index));
         }
         if (index == songList.size() - 1) {
@@ -312,6 +414,7 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
                 //start from the beginning
                 index = 0;
                 play();
+                updateNotification();
                 ReplayEventBus.getInstance().post(new SaveIndexEvent(index));
             }
         }
@@ -335,7 +438,7 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
             Thread updateCurrentElapsedTime = new Thread(() -> {
                 updateCurrentPosition();
             });
-
+            updateNotification();
             updateCurrentElapsedTime.start();
         }
     }
@@ -375,38 +478,6 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
         registerReceiver(becomingNoisyReciever, intentFilter);
     }
 
-
-    /*
-    *  subscriber that listenes for ToggleEvent and toggles the media playbac
-    * */
-    private Disposable playPauseToggle = RxEventBus.getInstance().subscribe(o -> {
-        if (o instanceof TogglePlayEvent) {
-            if (isPlaying()) {
-                pause();
-            } else {
-                resume();
-            }
-        }
-    });
-
-    /*
-    * subscriber that listenes for play event and plays the specified track by using
-    * the index that it recieved from the event publisher
-    * */
-    private Disposable playTrack = RxEventBus.getInstance().subscribe(o -> {
-        if (o instanceof PlayTrackEvent) {
-            int index1 = ((PlayTrackEvent) o).getIndex();
-            setIndex(index1);
-            play();
-        }
-    });
-
-    private Disposable seekTo = MediaRxEventBus.getInstance().subscribe(o -> {
-        if (o instanceof SeekToEvent) {
-            int index1 = ((SeekToEvent) o).getIndex();
-            seekTo(index1);
-        }
-    });
 
     public int getIndex() {
         return index;
