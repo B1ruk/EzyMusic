@@ -8,7 +8,7 @@ import io.starter.biruk.ezymusic.model.entity.Song;
  * Created by biruk on 11/07/18.
  */
 
-public interface SearchView {
+public interface SearchLibraryView {
     void displaySearchResults(List<Song> songs);
 
     void displayEmptySearchResult();
