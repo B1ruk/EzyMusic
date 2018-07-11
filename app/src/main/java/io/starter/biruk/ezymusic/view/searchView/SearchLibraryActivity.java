@@ -2,6 +2,7 @@ package io.starter.biruk.ezymusic.view.searchView;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
@@ -11,6 +12,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
@@ -22,10 +25,11 @@ import io.starter.biruk.ezymusic.model.dao.searchDAO.SearchDAO;
 import io.starter.biruk.ezymusic.model.entity.Song;
 import io.starter.biruk.ezymusic.presenter.SearchPresenter;
 import io.starter.biruk.ezymusic.util.widgets.fastscroller.FastScroller;
+import io.starter.biruk.ezymusic.view.songsView.adapter.SongListAdapter;
 
 public class SearchLibraryActivity extends AppCompatActivity implements SearchLibraryView {
 
-    private static final String TAG="SearchLibraryActivity";
+    private static final String TAG = "SearchLibraryActivity";
 
     private SearchPresenter searchPresenter;
 
@@ -45,7 +49,7 @@ public class SearchLibraryActivity extends AppCompatActivity implements SearchLi
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
 
-        searchPresenter=new SearchPresenter(this,new SearchDAO(this), AndroidSchedulers.mainThread());
+        searchPresenter = new SearchPresenter(this, new SearchDAO(), AndroidSchedulers.mainThread());
 
         initViews();
         setUpToolbar();
@@ -60,7 +64,7 @@ public class SearchLibraryActivity extends AppCompatActivity implements SearchLi
         searchFastScroller = (FastScroller) findViewById(R.id.search_fast_Scroller);
         searchRecyclerView = (RecyclerView) findViewById(R.id.song_search_list_recycler);
         searchInfoImage = (ImageView) findViewById(R.id.search_info_img);
-        searchToolbar= (Toolbar) findViewById(R.id.main_search_toolbar);
+        searchToolbar = (Toolbar) findViewById(R.id.main_search_toolbar);
     }
 
 
@@ -101,11 +105,28 @@ public class SearchLibraryActivity extends AppCompatActivity implements SearchLi
 
     @Override
     public void displaySearchResults(List<Song> songs) {
+        hideSearchInfo();
+        initSearchRecyclerView(songs);
+    }
+
+    private void initSearchRecyclerView(List<Song> songs) {
+        SongListAdapter songListAdapter = new SongListAdapter(this, songs);
+        searchRecyclerView.setAdapter(songListAdapter);
+        searchRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        searchFastScroller.setRecyclerView(searchRecyclerView);
+
     }
 
     @Override
     public void displayEmptySearchResult() {
+        hideSearchResult();
 
+        Picasso.with(this)
+                .load(android.R.drawable.stat_sys_headset)
+                .into(searchInfoImage);
+
+        searchInfoText.setText("No results found.");
     }
 
     @Override

@@ -67,8 +67,8 @@ public class MainActivity extends AppCompatActivity implements MainView {
         initBottomBar();
         initMiniPlayer();
 
-        mainPresenter = new MainPresenter(new SongStorageUtil(this), this, new SongDao(this),
-                new SearchDAO(this), Schedulers.io(), AndroidSchedulers.mainThread());
+        mainPresenter = new MainPresenter(new SongStorageUtil(this), this, new SongDao(this)
+                , Schedulers.io(), AndroidSchedulers.mainThread());
         mainPresenter.fetchSongs();
 
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
