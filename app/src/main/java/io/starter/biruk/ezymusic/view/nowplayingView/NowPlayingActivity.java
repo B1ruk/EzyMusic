@@ -164,13 +164,10 @@ public class NowPlayingActivity extends AppCompatActivity implements NowPlayingV
             }
         });
 
-        mainViewContainer.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                Log.d(TAG, " onTouch");
-                swipeDetector.onTouchEvent(event);
-                return true;
-            }
+        mainViewContainer.setOnTouchListener((v, event) -> {
+            Log.d(TAG, " onTouch");
+            swipeDetector.onTouchEvent(event);
+            return true;
         });
     }
 
@@ -223,12 +220,9 @@ public class NowPlayingActivity extends AppCompatActivity implements NowPlayingV
         nowPlayingPresenter.refresh();
         nowPlayingPresenter.updateCurrentView();
 
-        favoriteBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                new ViewAnimatiorUtil(getBaseContext()).rotateY(favoriteBtn, 360);
-                nowPlayingPresenter.updateFavoriteView();
-            }
+        favoriteBtn.setOnClickListener(v -> {
+            new ViewAnimatiorUtil(getBaseContext()).rotateY(favoriteBtn, 360);
+            nowPlayingPresenter.updateFavoriteView();
         });
 
         seekBarListener();
@@ -237,6 +231,7 @@ public class NowPlayingActivity extends AppCompatActivity implements NowPlayingV
         nowPlayingPresenter.shuffleModeToggleListener();
         nowPlayingPresenter.repeatModeListener();
         nowPlayingPresenter.playPauseUpdater();
+        nowPlayingPresenter.trackChangeListener();
 
         LocalBroadcastManager.getInstance(this).registerReceiver(elapsedTimeReciever, new IntentFilter(PlayBackService.CURRENT_POSITION));
 
@@ -246,7 +241,6 @@ public class NowPlayingActivity extends AppCompatActivity implements NowPlayingV
     @Override
     protected void onPause() {
         super.onPause();
-
         LocalBroadcastManager.getInstance(this).unregisterReceiver(elapsedTimeReciever);
 
 
@@ -271,22 +265,16 @@ public class NowPlayingActivity extends AppCompatActivity implements NowPlayingV
     }
 
     private void shuffleToggle() {
-        shuffleButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                new ViewAnimatiorUtil(getApplicationContext()).rotateY(shuffleButton, 485);
-                MediaRxEventBus.getInstance().publish(new ShuffleToggleEvent());
-            }
+        shuffleButton.setOnClickListener(v -> {
+            new ViewAnimatiorUtil(getApplicationContext()).rotateY(shuffleButton, 485);
+            MediaRxEventBus.getInstance().publish(new ShuffleToggleEvent());
         });
     }
 
     private void repeatToggle() {
-        repeatButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                new ViewAnimatiorUtil(getApplicationContext()).rotateY(repeatButton, 485);
-                MediaRxEventBus.getInstance().publish(new RepeatToggleEvent());
-            }
+        repeatButton.setOnClickListener(v -> {
+            new ViewAnimatiorUtil(getApplicationContext()).rotateY(repeatButton, 485);
+            MediaRxEventBus.getInstance().publish(new RepeatToggleEvent());
         });
     }
 
@@ -342,32 +330,17 @@ public class NowPlayingActivity extends AppCompatActivity implements NowPlayingV
 
     @Override
     public void playPauseToggle() {
-        playButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                RxEventBus.getInstance().publish(new TogglePlayEvent());
-            }
-        });
+        playButton.setOnClickListener(v -> RxEventBus.getInstance().publish(new TogglePlayEvent()));
     }
 
     @Override
     public void nextSong() {
-        nextButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                nowPlayingPresenter.playNext();
-            }
-        });
+        nextButton.setOnClickListener(v -> nowPlayingPresenter.playNext());
     }
 
     @Override
     public void previousSong() {
-        previousButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                nowPlayingPresenter.playPrevious();
-            }
-        });
+        previousButton.setOnClickListener(v -> nowPlayingPresenter.playPrevious());
     }
 
     @Override

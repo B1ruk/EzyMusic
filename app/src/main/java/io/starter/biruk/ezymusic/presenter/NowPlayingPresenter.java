@@ -19,6 +19,7 @@ import io.starter.biruk.ezymusic.events.media.PlayTrackEvent;
 import io.starter.biruk.ezymusic.events.media.SaveIndexEvent;
 import io.starter.biruk.ezymusic.events.media.SeekBarDraggedEvent;
 import io.starter.biruk.ezymusic.events.media.SeekToEvent;
+import io.starter.biruk.ezymusic.events.media.TrackChangeEvent;
 import io.starter.biruk.ezymusic.events.media.playbackMode.RepeatPostEvent;
 import io.starter.biruk.ezymusic.events.media.playbackMode.ShufflePostEvent;
 import io.starter.biruk.ezymusic.model.dao.FavoriteDao.FavoriteRepository;
@@ -51,7 +52,6 @@ public class NowPlayingPresenter {
 
         this.compositeDisposable = new CompositeDisposable();
     }
-
 
     /*
     *
@@ -161,14 +161,11 @@ public class NowPlayingPresenter {
     * */
     public void shuffleModeToggleListener(){
         compositeDisposable.add(
-                MediaReplayEventBus.getInstance().subscribe(new Consumer<Object>() {
-                    @Override
-                    public void accept(Object o) throws Exception {
-                        if (o instanceof ShufflePostEvent){
-                            Shuffle shuffleMode = ((ShufflePostEvent) o).getShuffleMode();
-                            System.out.println("from repeat mode"+shuffleMode.toString());
-                            nowPlayingView.updateShuffleView(shuffleMode);
-                        }
+                MediaReplayEventBus.getInstance().subscribe(o -> {
+                    if (o instanceof ShufflePostEvent){
+                        Shuffle shuffleMode = ((ShufflePostEvent) o).getShuffleMode();
+                        System.out.println("from repeat mode"+shuffleMode.toString());
+                        nowPlayingView.updateShuffleView(shuffleMode);
                     }
                 })
         );
@@ -191,7 +188,7 @@ public class NowPlayingPresenter {
     }
 
     /*
-    * An observer that listens for whether a Play/Pause event has occured
+    * An observer that listens for whether a Play/Pause event has occurred
     * and based on the result updates the view
     * */
     public void playPauseUpdater() {
@@ -210,16 +207,35 @@ public class NowPlayingPresenter {
     }
 
     /*
+    * updates the view when previous or next buttons
+    * are triggered from the notification
+    * */
+    public void trackChangeListener(){
+        compositeDisposable.add(
+                MediaReplayEventBus.getInstance().subscribe(o->{
+                    if (o instanceof TrackChangeEvent){
+                        int index = ((TrackChangeEvent) o).getIndex();
+                        List<Song> songs = ((TrackChangeEvent) o).getSongs();
+
+                        updateQueue(index,songs);
+                        updateCurrentView();
+                    }
+                })
+        );
+    }
+
+    private void updateQueue(int index, List<Song> songs) {
+        this.index=index;
+        this.songs=songs;
+    }
+
+    /*
     *
     * calls the specific functions when there is a track change
     * */
     public void updateCurrentView() {
-
         isSongFavorite();
-
         nowPlayingView.updateView(songs.get(this.index));
-
-
     }
 
     /*
