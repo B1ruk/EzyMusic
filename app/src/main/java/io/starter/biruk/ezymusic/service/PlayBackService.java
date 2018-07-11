@@ -241,18 +241,20 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
         String action = intent.getAction();
         Log.d(TAG, String.format("in handleMediaCmdInt -->  %s", action));
 
-        switch (action){
+        switch (action) {
             case PLAY_PAUSE:
-                if (isPlaying()){
+                if (isPlaying()) {
                     pause();
-                }else {
+                } else {
                     resume();
                 }
                 updateNotification();
                 break;
             case PREVIOUS:
+                previous();
                 break;
             case NEXT:
+                next();
                 break;
         }
 
@@ -354,6 +356,64 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
     public void setQueue(int index, List<Song> songs) {
         this.index = index;
         this.songList = songs;
+    }
+
+    public void previous() {
+        switch (shuffle) {
+            case ON:
+                playShufflePreviousTrack();
+                break;
+            case OFF:
+                playPreviousTrack();
+                break;
+        }
+    }
+
+    private void playPreviousTrack() {
+        if (songList.size() == 1) {
+            play();
+        }
+        else if (index > 0) {
+            index--;
+            play();
+        }
+        else if (index == 0) {
+            index = songList.size() - 1;
+            play();
+        }
+    }
+
+    private void playShufflePreviousTrack() {
+
+    }
+
+    public void next() {
+        switch (shuffle) {
+            case ON:
+                playShuffleNextTrack();
+                break;
+            case OFF:
+                playNextTrack();
+                break;
+        }
+    }
+
+    private void playNextTrack() {
+        if (songList.size() == 1) {
+            play();
+        }
+        else if (index < songList.size()) {
+            index++;
+            play();
+        }
+        else if (index == songList.size()) {
+            index = 0;
+            play();
+        }
+    }
+
+    private void playShuffleNextTrack() {
+
     }
 
     public void play() {
