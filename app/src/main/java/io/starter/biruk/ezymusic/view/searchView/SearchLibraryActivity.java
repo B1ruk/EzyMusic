@@ -14,13 +14,20 @@ import android.widget.TextView;
 
 import java.util.List;
 
+import io.reactivex.Scheduler;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
 import io.starter.biruk.ezymusic.R;
+import io.starter.biruk.ezymusic.model.dao.searchDAO.SearchDAO;
 import io.starter.biruk.ezymusic.model.entity.Song;
+import io.starter.biruk.ezymusic.presenter.SearchPresenter;
 import io.starter.biruk.ezymusic.util.widgets.fastscroller.FastScroller;
 
 public class SearchLibraryActivity extends AppCompatActivity implements SearchLibraryView {
 
     private static final String TAG="SearchLibraryActivity";
+
+    private SearchPresenter searchPresenter;
 
     private View searchSongsView;
     private View searchInfoView;
@@ -37,6 +44,8 @@ public class SearchLibraryActivity extends AppCompatActivity implements SearchLi
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
+
+        searchPresenter=new SearchPresenter(this,new SearchDAO(this), AndroidSchedulers.mainThread());
 
         initViews();
         setUpToolbar();
@@ -76,13 +85,14 @@ public class SearchLibraryActivity extends AppCompatActivity implements SearchLi
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                return false;
+                searchPresenter.loadSearchResults(query);
+                return true;
             }
 
             @Override
             public boolean onQueryTextChange(String query) {
-                Log.d(TAG,query);
-                return false;
+                searchPresenter.loadSearchResults(query);
+                return true;
             }
         });
         return super.onCreateOptionsMenu(menu);
@@ -91,7 +101,6 @@ public class SearchLibraryActivity extends AppCompatActivity implements SearchLi
 
     @Override
     public void displaySearchResults(List<Song> songs) {
-
     }
 
     @Override

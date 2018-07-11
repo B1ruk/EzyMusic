@@ -1,7 +1,13 @@
 package io.starter.biruk.ezymusic.presenter;
 
+import java.util.List;
+
 import io.reactivex.Scheduler;
+import io.reactivex.annotations.NonNull;
+import io.reactivex.observers.DisposableObserver;
+import io.reactivex.schedulers.Schedulers;
 import io.starter.biruk.ezymusic.model.dao.searchDAO.SearchRepository;
+import io.starter.biruk.ezymusic.model.entity.Song;
 import io.starter.biruk.ezymusic.view.searchView.SearchLibraryView;
 
 /**
@@ -20,4 +26,29 @@ public class SearchPresenter {
     }
 
 
+    public void loadSearchResults(String query){
+        searchRepository.searchResults(query)
+                .subscribeOn(Schedulers.io())
+                .observeOn(mainThread)
+                .subscribeWith(new DisposableObserver<List<Song>>() {
+                    @Override
+                    public void onNext(@NonNull List<Song> songs) {
+                        if (!songs.isEmpty()){
+                            searchLibraryView.displaySearchResults(songs);
+                        }else {
+                            searchLibraryView.displayEmptySearchResult();
+                        }
+                    }
+
+                    @Override
+                    public void onError(@NonNull Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+
+                    }
+                });
+    }
 }
