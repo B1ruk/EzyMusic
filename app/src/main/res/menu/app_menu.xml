@@ -6,8 +6,15 @@
         android:id="@+id/search"
         android:title="@string/search"
         android:icon="@drawable/ic_search"
-        app:actionViewClass="android.support.v7.widget.SearchView"
         app:showAsAction="always"
         />
+
+    <item
+        android:id="@+id/themes"
+        android:title="@string/themes"
+        android:icon="@android:drawable/ic_menu_preferences"
+        app:showAsAction="never"
+        />
+
 
 </menu>

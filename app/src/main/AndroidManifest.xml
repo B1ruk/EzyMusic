@@ -29,7 +29,7 @@
             android:exported="false" />
         <service android:name=".service.ImageDownloaderService" />
 
-        <activity android:name=".view.searchView.SearchActivity"></activity>
+        <activity android:name=".view.searchView.SearchLibraryActivity"></activity>
     </application>
 
 </manifest>
