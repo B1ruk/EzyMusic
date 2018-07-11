@@ -37,6 +37,7 @@ import io.starter.biruk.ezymusic.events.media.PlayTrackEvent;
 import io.starter.biruk.ezymusic.events.media.SaveIndexEvent;
 import io.starter.biruk.ezymusic.events.media.SeekToEvent;
 import io.starter.biruk.ezymusic.events.media.TogglePlayEvent;
+import io.starter.biruk.ezymusic.events.media.TrackChangeEvent;
 import io.starter.biruk.ezymusic.events.media.playbackMode.RepeatPostEvent;
 import io.starter.biruk.ezymusic.events.media.playbackMode.RepeatToggleEvent;
 import io.starter.biruk.ezymusic.events.media.playbackMode.ShufflePostEvent;
@@ -236,7 +237,9 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
         }
     }
 
-
+    /*
+    *   Handles the intent that is sent by the notification buttons
+    * */
     private void handleMediaCommandIntent(Intent intent) {
         String action = intent.getAction();
         Log.d(TAG, String.format("in handleMediaCmdInt -->  %s", action));
@@ -249,6 +252,7 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
                     resume();
                 }
                 updateNotification();
+                MediaReplayEventBus.getInstance().post(new ChangePlayPauseEvent(isPlaying()));
                 break;
             case PREVIOUS:
                 previous();
@@ -367,17 +371,16 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
                 playPreviousTrack();
                 break;
         }
+        MediaReplayEventBus.getInstance().post(new TrackChangeEvent(index,songList));
     }
 
     private void playPreviousTrack() {
         if (songList.size() == 1) {
             play();
-        }
-        else if (index > 0) {
+        } else if (index > 0) {
             index--;
             play();
-        }
-        else if (index == 0) {
+        } else if (index == 0) {
             index = songList.size() - 1;
             play();
         }
@@ -396,17 +399,17 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
                 playNextTrack();
                 break;
         }
+
+        MediaReplayEventBus.getInstance().post(new TrackChangeEvent(index,songList));
     }
 
     private void playNextTrack() {
         if (songList.size() == 1) {
             play();
-        }
-        else if (index < songList.size()) {
+        } else if (index <songList.size()-1) {
             index++;
             play();
-        }
-        else if (index == songList.size()) {
+        } else if (index == songList.size()-1) {
             index = 0;
             play();
         }
