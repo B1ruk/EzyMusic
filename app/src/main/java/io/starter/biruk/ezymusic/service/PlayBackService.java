@@ -160,6 +160,8 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
 
         registerBecomingNoisyReciever();
 
+        mediaServiceCompositeDisposable.addAll(playPauseToggle,playTrack,seekTo);
+
         initMediaReciever();
 
         this.songFormatUtil = new SongFormatUtil(this);
@@ -287,10 +289,17 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
     }
 
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        mediaServiceCompositeDisposable.clear();
+    }
+
     /*
-    * listens for shuffle mode event,then toggles the shuffle state
-    * when the event occurs and finally it will post the event ShufflePostEvent
-    * */
+        * listens for shuffle mode event,then toggles the shuffle state
+        * when the event occurs and finally it will post the event ShufflePostEvent
+        * */
     private void shuffleModeListener() {
         mediaServiceCompositeDisposable.add(
                 MediaRxEventBus.getInstance().subscribe(o -> {
