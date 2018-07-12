@@ -23,6 +23,7 @@ import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import io.reactivex.disposables.CompositeDisposable;
@@ -81,6 +82,9 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
     private int index;
     private List<Song> songList;
 
+    private int shuffledIndex;
+    private List<Song> shuffledSongList;
+
     private Shuffle shuffle;
 
     private Repeat repeat;
@@ -120,7 +124,14 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
     private Disposable playTrack = RxEventBus.getInstance().subscribe(o -> {
         if (o instanceof PlayTrackEvent) {
             int index1 = ((PlayTrackEvent) o).getIndex();
-            setIndex(index1);
+            switch (shuffle){
+                case ON:
+                    this.shuffledIndex=index1;
+                    break;
+                case OFF:
+                    setIndex(index1);
+                    break;
+            }
             play();
             updateNotification();
         }
@@ -221,7 +232,17 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
     }
 
     private void updateRemoteView(RemoteViews mLargeContentView) {
-        Song song = songList.get(index);
+        Song song = null;
+
+        switch (shuffle){
+            case ON:
+                song=shuffledSongList.get(shuffledIndex);
+                break;
+            case OFF:
+                song=songList.get(index);
+                break;
+        }
+
         String title = songFormatUtil.formatString(song.title, 24);
         String artist = songFormatUtil.formatString(song.artist, 16);
 
@@ -275,6 +296,9 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
                     if (o instanceof ShuffleToggleEvent) {
                         //toggle the state
                         shuffle = Shuffle.toggleMode(shuffle);
+                        if (shuffle == Shuffle.ON) {
+                            shuffleSongs();
+                        }
                         MediaReplayEventBus.getInstance().post(new ShufflePostEvent(shuffle));
                     }
                 })
@@ -362,61 +386,89 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
         this.songList = songs;
     }
 
+    public void shuffleSongs() {
+        Song currentSong = songList.get(index);
+        this.shuffledSongList = songList;
+
+        Collections.shuffle(shuffledSongList);
+        this.shuffledIndex = 0;
+
+        //swap the first one with the current song
+        for (int i = 0; i < shuffledSongList.size(); i++) {
+            if (shuffledSongList.get(i) == currentSong) {
+                Collections.swap(shuffledSongList, 0, i);
+                break;
+            }
+        }
+    }
+
     public void previous() {
         switch (shuffle) {
             case ON:
                 playShufflePreviousTrack();
+                MediaReplayEventBus.getInstance().post(new TrackChangeEvent(shuffledIndex, shuffledSongList));
                 break;
             case OFF:
                 playPreviousTrack();
+                MediaReplayEventBus.getInstance().post(new TrackChangeEvent(index, songList));
                 break;
         }
-        MediaReplayEventBus.getInstance().post(new TrackChangeEvent(index,songList));
     }
 
     private void playPreviousTrack() {
         if (songList.size() == 1) {
-            play();
         } else if (index > 0) {
             index--;
-            play();
         } else if (index == 0) {
             index = songList.size() - 1;
-            play();
         }
+        play();
     }
 
     private void playShufflePreviousTrack() {
-
+        if (shuffledSongList.size() == 1) {
+        } else if (index > 0) {
+            shuffledIndex--;
+        } else if (shuffledIndex == 0) {
+            shuffledIndex = shuffledSongList.size() - 1;
+        }
+        play();
     }
 
     public void next() {
         switch (shuffle) {
             case ON:
                 playShuffleNextTrack();
+                MediaReplayEventBus.getInstance().post(new TrackChangeEvent(shuffledIndex, shuffledSongList));
                 break;
             case OFF:
                 playNextTrack();
+                MediaReplayEventBus.getInstance().post(new TrackChangeEvent(index, songList));
                 break;
         }
 
-        MediaReplayEventBus.getInstance().post(new TrackChangeEvent(index,songList));
     }
 
     private void playNextTrack() {
         if (songList.size() == 1) {
-            play();
-        } else if (index <songList.size()-1) {
+
+        } else if (index < songList.size() - 1) {
             index++;
-            play();
-        } else if (index == songList.size()-1) {
+        } else if (index == songList.size() - 1) {
             index = 0;
-            play();
         }
+
+        play();
     }
 
     private void playShuffleNextTrack() {
-
+        if (shuffledSongList.size() == 1) {
+        } else if (shuffledIndex < shuffledSongList.size() - 1) {
+            shuffledIndex++;
+        } else if (shuffledIndex == shuffledSongList.size() - 1) {
+            shuffledIndex = 0;
+        }
+        play();
     }
 
     public void play() {
@@ -429,9 +481,16 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
             Toast.makeText(PlayBackService.this, "media player is null", Toast.LENGTH_SHORT).show();
         }
 
-        Song song = songList.get(index);
+        Song song = null;
 
-        Log.i(TAG, " play " + song.title);
+        switch (shuffle) {
+            case ON:
+                song = shuffledSongList.get(shuffledIndex);
+                break;
+            case OFF:
+                song = songList.get(index);
+                break;
+        }
 
         try {
             mediaPlayer.setDataSource(song.data);
@@ -512,25 +571,51 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
 
         MediaReplayEventBus.getInstance().post(new ChangePlayPauseEvent(mediaPlayer.isPlaying()));
 
-        if (index < songList.size() - 1) {
-            if (repeat == Repeat.NONE || repeat == Repeat.ALL) {
-                ++index;
-            }
-            if (repeat == Repeat.ONE) {
-                //do not modify the index just play the current song
-            }
-            play();
-            updateNotification();
-            ReplayEventBus.getInstance().post(new SaveIndexEvent(index));
-        }
-        if (index == songList.size() - 1) {
-            if (repeat == Repeat.ALL) {
-                //start from the beginning
-                index = 0;
-                play();
-                updateNotification();
-                ReplayEventBus.getInstance().post(new SaveIndexEvent(index));
-            }
+        switch (shuffle) {
+            case ON:
+
+                if (shuffledIndex < shuffledSongList.size() - 1) {
+                    if (repeat == Repeat.NONE || repeat == Repeat.ALL) {
+                        ++shuffledIndex;
+                    }
+                    if (repeat == Repeat.ONE) {
+                        //do not modify the shuffledIndex just play the current song
+                    }
+                    play();
+                    updateNotification();
+                    ReplayEventBus.getInstance().post(new SaveIndexEvent(shuffledIndex));
+                } else if (shuffledIndex == shuffledSongList.size() - 1) {
+                    if (repeat == Repeat.ALL || repeat == Repeat.ONE) {
+                        //start from the beginning
+                        shuffledIndex = 0;
+                        play();
+                        updateNotification();
+                        ReplayEventBus.getInstance().post(new SaveIndexEvent(shuffledIndex));
+                    }
+                }
+                break;
+            case OFF:
+
+                if (index < songList.size() - 1) {
+                    if (repeat == Repeat.NONE || repeat == Repeat.ALL) {
+                        ++index;
+                    }
+                    if (repeat == Repeat.ONE) {
+                        //do not modify the index just play the current song
+                    }
+                    play();
+                    updateNotification();
+                    ReplayEventBus.getInstance().post(new SaveIndexEvent(index));
+                } else if (index == songList.size() - 1) {
+                    if (repeat == Repeat.ALL || repeat == Repeat.ONE) {
+                        //start from the beginning
+                        index = 0;
+                        play();
+                        updateNotification();
+                        ReplayEventBus.getInstance().post(new SaveIndexEvent(index));
+                    }
+                }
+                break;
         }
 
     }
