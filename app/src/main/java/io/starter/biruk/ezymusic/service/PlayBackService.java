@@ -50,6 +50,7 @@ import io.starter.biruk.ezymusic.service.playbackMode.Shuffle;
 import io.starter.biruk.ezymusic.util.AlbumArtworkUtil;
 import io.starter.biruk.ezymusic.util.SongFormatUtil;
 import io.starter.biruk.ezymusic.view.mainView.MainActivity;
+import io.starter.biruk.ezymusic.view.nowplayingView.NowPlayingActivity;
 
 import static io.starter.biruk.ezymusic.service.playbackMode.PlayState.NEXT;
 import static io.starter.biruk.ezymusic.service.playbackMode.PlayState.PLAY_PAUSE;
@@ -193,9 +194,9 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
     }
 
     public Notification buildNotification() {
-        Intent nowPlayingIntent = new Intent(this, MainActivity.class);
+        Intent nowPlayingIntent = new Intent(this, NowPlayingActivity.class);
 
-        PendingIntent clickIntent = PendingIntent.getActivity(this, 0, nowPlayingIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent clickIntent = PendingIntent.getActivity(this, 0, nowPlayingIntent, PendingIntent.FLAG_CANCEL_CURRENT);
 
         Notification notification = new NotificationCompat.Builder(this)
                 .setSmallIcon(android.R.drawable.stat_sys_headset)
