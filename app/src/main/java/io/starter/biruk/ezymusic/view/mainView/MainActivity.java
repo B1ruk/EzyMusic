@@ -1,12 +1,14 @@
 package io.starter.biruk.ezymusic.view.mainView;
 
+import android.Manifest;
 import android.content.Intent;
-import android.support.annotation.IdRes;
+import android.os.Build;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -14,13 +16,18 @@ import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
+import com.karumi.dexter.Dexter;
+import com.karumi.dexter.MultiplePermissionsReport;
+import com.karumi.dexter.PermissionToken;
+import com.karumi.dexter.listener.PermissionRequest;
+import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
 import com.roughike.bottombar.BottomBar;
-import com.roughike.bottombar.OnTabSelectListener;
+
+import java.util.List;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 import io.starter.biruk.ezymusic.R;
-import io.starter.biruk.ezymusic.model.dao.searchDAO.SearchDAO;
 import io.starter.biruk.ezymusic.model.dao.songDao.SongDao;
 import io.starter.biruk.ezymusic.model.songFetcher.SongStorageUtil;
 import io.starter.biruk.ezymusic.presenter.MainPresenter;
@@ -69,9 +76,42 @@ public class MainActivity extends AppCompatActivity implements MainView {
 
         mainPresenter = new MainPresenter(new SongStorageUtil(this), this, new SongDao(this)
                 , Schedulers.io(), AndroidSchedulers.mainThread());
-        mainPresenter.fetchSongs();
+
 
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
+        permissionCheck();
+
+    }
+
+    public void permissionCheck() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Dexter.withActivity(this)
+                    .withPermissions(
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                            Manifest.permission.READ_EXTERNAL_STORAGE,
+                            Manifest.permission.WAKE_LOCK,
+                            Manifest.permission.ACCESS_NETWORK_STATE,
+                            Manifest.permission.INTERNET
+                    )
+                    .withListener(new MultiplePermissionsListener() {
+                        @Override
+                        public void onPermissionsChecked(MultiplePermissionsReport multiplePermis) {
+                            if (multiplePermis.areAllPermissionsGranted()){
+                                mainPresenter.fetchSongs();
+                            }
+                        }
+
+                        @Override
+                        public void onPermissionRationaleShouldBeShown(List<PermissionRequest> list, PermissionToken permissionToken) {
+                        }
+                    }).withErrorListener(dexterError -> {
+
+            }).check();
+
+
+        } else {
+            mainPresenter.fetchSongs();
+        }
 
     }
 
@@ -102,23 +142,20 @@ public class MainActivity extends AppCompatActivity implements MainView {
     }
 
     private void initBottomBar() {
-        mBottomBar.setOnTabSelectListener(new OnTabSelectListener() {
-            @Override
-            public void onTabSelected(@IdRes int tabId) {
-                switch (tabId) {
-                    case R.id.bottom_nav_songs:
-                        initFragment(songsFragment);
-                        break;
-                    case R.id.bottom_nav_artists:
-                        initFragment(artistFragment);
-                        break;
-                    case R.id.bottom_nav_albums:
-                        initFragment(albumFragment);
-                        break;
-                    case R.id.bottom_nav_playlists:
-                        initFragment(playlistFragment);
-                        break;
-                }
+        mBottomBar.setOnTabSelectListener(tabId -> {
+            switch (tabId) {
+                case R.id.bottom_nav_songs:
+                    initFragment(songsFragment);
+                    break;
+                case R.id.bottom_nav_artists:
+                    initFragment(artistFragment);
+                    break;
+                case R.id.bottom_nav_albums:
+                    initFragment(albumFragment);
+                    break;
+                case R.id.bottom_nav_playlists:
+                    initFragment(playlistFragment);
+                    break;
             }
         });
     }
@@ -145,12 +182,12 @@ public class MainActivity extends AppCompatActivity implements MainView {
     }
 
     private boolean launchSearchView() {
-        Intent launchSearch=new Intent(this, SearchLibraryActivity.class);
+        Intent launchSearch = new Intent(this, SearchLibraryActivity.class);
         startActivity(launchSearch);
         return true;
     }
 
-    private boolean launchThemesView(){
+    private boolean launchThemesView() {
         return true;
     }
 
