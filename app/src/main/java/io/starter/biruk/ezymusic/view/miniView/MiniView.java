@@ -10,8 +10,6 @@ import io.starter.biruk.ezymusic.model.entity.Song;
 public interface MiniView {
     void updateUi(Song song);
     void launchNowPlaying();
-    void play(int index, List<Song> songList);
-
     void displayPauseIcon();
     void displayPlayIcon();
 }
