@@ -23,6 +23,7 @@ import android.widget.RemoteViews;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 import io.reactivex.Observable;
@@ -41,6 +42,7 @@ import io.starter.biruk.ezymusic.events.SeekToEvent;
 import io.starter.biruk.ezymusic.events.media.MediaStatusEvent;
 import io.starter.biruk.ezymusic.events.media.PlayerToggleEvent;
 import io.starter.biruk.ezymusic.events.media.RequestMediaStatusEvent;
+import io.starter.biruk.ezymusic.events.media.RequestQueueEvent;
 import io.starter.biruk.ezymusic.events.media.playbackMode.PlayPauseStatusEvent;
 import io.starter.biruk.ezymusic.events.media.playbackMode.QueueEvent;
 import io.starter.biruk.ezymusic.events.media.playbackMode.RepeatStatusEvent;
@@ -123,7 +125,8 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
     }
 
     private void initComponents() {
-        this.songList = new ArrayList<>();
+        this.songList = new LinkedList<>();
+        this.shuffledSongList=new LinkedList<>();
         this.index = 0;
 
         mediaServiceCompositeDisposable = new CompositeDisposable();
@@ -169,12 +172,23 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
                     if (o instanceof RequestMediaStatusEvent) {
                         postMediaStatus();
                     }
+                    if (o instanceof RequestQueueEvent){
+                        postQueueStatus();
+                    }
 
                     if (o instanceof QueueEvent) {
                         int index = ((QueueEvent) o).getIndex();
                         List<Song> songs = ((QueueEvent) o).getSongs();
 
-                        setQueue(index, songs);
+                        switch (shuffle) {
+                            case ON:
+                                this.shuffledIndex=index;
+                                this.shuffledSongList=songs;
+                                break;
+                            case OFF:
+                                setQueue(index, songs);
+                                break;
+                        }
                         play();
                     }
 
@@ -223,9 +237,9 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
 
     public void togglePlayPause() {
         MediaRxEventBus.getInstance().publish(new PlayPauseStatusEvent(!isPlaying()));
-        if (isPlaying()){
+        if (isPlaying()) {
             pause();
-        }else {
+        } else {
             resume();
         }
         updateNotification();
@@ -235,12 +249,13 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
         this.shuffle = Shuffle.toggleMode(this.shuffle);
         switch (shuffle) {
             case ON:
-                shuffleSongs();
+                shuffleSongs(songList);
                 break;
             case OFF:
-                unshuffleSongs();
+                unshuffleSongs(shuffledSongList);
                 break;
         }
+        postQueueStatus();
         MediaRxEventBus.getInstance().publish(new ShuffleStatusEvent(shuffle));
     }
 
@@ -376,9 +391,11 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
         this.songList = songs;
     }
 
-    public void shuffleSongs() {
-        Song currentSong = songList.get(index);
-        this.shuffledSongList = songList;
+    public void shuffleSongs(List<Song> songs) {
+        Song currentSong = songs.get(index);
+
+        shuffledSongList.clear();
+        shuffledSongList.addAll(songs);
 
         Collections.shuffle(shuffledSongList);
         this.shuffledIndex = 0;
@@ -392,12 +409,13 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
         }
     }
 
-    public void unshuffleSongs() {
-        Song currentSong = shuffledSongList.get(shuffledIndex);
+    public void unshuffleSongs(List<Song> songs) {
+        Song currentSong = songs.get(shuffledIndex);
 
         for (int i = 0; i < songList.size(); i++) {
-            if (songList.get(i) == currentSong) {
+            if (songList.get(i).songId == currentSong.songId) {
                 setIndex(i);
+                break;
             }
         }
     }
@@ -620,14 +638,39 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
 
     }
 
+    public void postQueueStatus(){
+        switch (shuffle){
+            case ON:
+                MediaRxEventBus.getInstance().publish(new QueueEvent(shuffledIndex,shuffledSongList));
+                break;
+            case OFF:
+                MediaRxEventBus.getInstance().publish(new QueueEvent(index,songList));
+                break;
+        }
+    }
+
 
     public void postMediaStatus() {
-        MediaRxEventBus.getInstance().publish(new MediaStatusEvent(
-                isPlaying(),
-                shuffle,
-                repeat,
-                new QueueEvent(getIndex(), songList)
-        ));
+        switch (shuffle) {
+            case ON:
+                MediaRxEventBus.getInstance().publish(new MediaStatusEvent(
+                        isPlaying(),
+                        shuffle,
+                        repeat,
+                        new QueueEvent(shuffledIndex, shuffledSongList)
+                ));
+                break;
+            case OFF:
+                MediaRxEventBus.getInstance().publish(new MediaStatusEvent(
+                        isPlaying(),
+                        shuffle,
+                        repeat,
+                        new QueueEvent(getIndex(), songList)
+                ));
+                break;
+
+        }
+
     }
 
     public int getIndex() {
