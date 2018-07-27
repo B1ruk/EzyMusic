@@ -7,13 +7,16 @@
     android:layout_height="wrap_content"
     app:cardCornerRadius="4dp"
     app:cardElevation="4dp"
+    app:cardUseCompatPadding="true"
     android:id="@+id/cardview_song"
 
     >
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp">
 
         <ImageView
             android:id="@+id/song_cover_image"
