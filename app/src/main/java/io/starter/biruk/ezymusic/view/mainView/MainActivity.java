@@ -1,8 +1,12 @@
 package io.starter.biruk.ezymusic.view.mainView;
 
 import android.Manifest;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Build;
+import android.os.IBinder;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
@@ -31,6 +35,7 @@ import io.starter.biruk.ezymusic.R;
 import io.starter.biruk.ezymusic.model.dao.songDao.SongDao;
 import io.starter.biruk.ezymusic.model.songFetcher.SongStorageUtil;
 import io.starter.biruk.ezymusic.presenter.MainPresenter;
+import io.starter.biruk.ezymusic.service.PlayBackService;
 import io.starter.biruk.ezymusic.util.ViewTypeConstant;
 import io.starter.biruk.ezymusic.view.albumsView.AlbumFragment;
 import io.starter.biruk.ezymusic.view.artistsView.ArtistFragment;
@@ -56,31 +61,63 @@ public class MainActivity extends AppCompatActivity implements MainView {
 
     private MainPresenter mainPresenter;
 
+    private PlayBackService playBackService;
+    private boolean serviceBound;
+
+    private ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            PlayBackService.PlayBackBinder playBackBinder = (PlayBackService.PlayBackBinder) service;
+
+            playBackService = playBackBinder.getPlayerService();
+            serviceBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            serviceBound = false;
+        }
+    };
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        initViews();
+
+        mainPresenter = new MainPresenter(new SongStorageUtil(this), this, new SongDao(this)
+                , Schedulers.io(), AndroidSchedulers.mainThread());
+
+        if (!serviceBound) {
+            Log.i(TAG, "servicebound process ---");
+            Intent intent = new Intent(this, PlayBackService.class);
+            this.bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
+        }
+
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
+        permissionCheck();
+
+    }
+
+    public void initViews() {
+        initWidget();
+
+        initFragment();
+
+        initBottomBar();
+        initMiniPlayer();
+    }
+
+    public void initWidget() {
         mToolbar = (Toolbar) findViewById(R.id.main_toolbar);
         setSupportActionBar(mToolbar);
 
         mBottomBar = (BottomBar) findViewById(R.id.bottom_bar);
         miniPlayerContainer = (FrameLayout) findViewById(R.id.mini_player);
         rootLayout = (LinearLayout) findViewById(R.id.root_layout);
-
-        initFragment();
-
-        initBottomBar();
-        initMiniPlayer();
-
-        mainPresenter = new MainPresenter(new SongStorageUtil(this), this, new SongDao(this)
-                , Schedulers.io(), AndroidSchedulers.mainThread());
-
-
-        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
-        permissionCheck();
-
     }
 
     public void permissionCheck() {
@@ -98,6 +135,7 @@ public class MainActivity extends AppCompatActivity implements MainView {
                         public void onPermissionsChecked(MultiplePermissionsReport multiplePermis) {
                             if (multiplePermis.areAllPermissionsGranted()){
                                 mainPresenter.fetchSongs();
+                                bindToService();
                             }
                         }
 
@@ -112,6 +150,11 @@ public class MainActivity extends AppCompatActivity implements MainView {
         } else {
             mainPresenter.fetchSongs();
         }
+
+    }
+
+    protected void bindToService() {
+        Intent intent=new Intent(this, PlayBackService.class);
 
     }
 
@@ -134,14 +177,14 @@ public class MainActivity extends AppCompatActivity implements MainView {
         super.onResume();
     }
 
-    private void initMiniPlayer() {
+    public void initMiniPlayer() {
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.mini_player, miniPlayerFragment)
                 .commit();
     }
 
-    private void initBottomBar() {
+    public void initBottomBar() {
         mBottomBar.setOnTabSelectListener(tabId -> {
             switch (tabId) {
                 case R.id.bottom_nav_songs:
@@ -160,7 +203,7 @@ public class MainActivity extends AppCompatActivity implements MainView {
         });
     }
 
-    private void initFragment(Fragment fragment) {
+    public void initFragment(Fragment fragment) {
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.fragment_container, fragment)
@@ -181,13 +224,13 @@ public class MainActivity extends AppCompatActivity implements MainView {
         return super.onCreateOptionsMenu(menu);
     }
 
-    private boolean launchSearchView() {
+    public boolean launchSearchView() {
         Intent launchSearch = new Intent(this, SearchLibraryActivity.class);
         startActivity(launchSearch);
         return true;
     }
 
-    private boolean launchThemesView() {
+    public boolean launchThemesView() {
         return true;
     }
 
