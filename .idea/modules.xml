@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/EzyMusic.iml" filepath="$PROJECT_DIR$/EzyMusic.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/dexter/dexter.iml" filepath="$PROJECT_DIR$/dexter/dexter.iml" />
       <module fileurl="file://$PROJECT_DIR$/library-1.0/library-1.0.iml" filepath="$PROJECT_DIR$/library-1.0/library-1.0.iml" />
     </modules>
   </component>
