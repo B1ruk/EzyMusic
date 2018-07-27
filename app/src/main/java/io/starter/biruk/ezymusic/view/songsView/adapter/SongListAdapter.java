@@ -72,7 +72,7 @@ public class SongListAdapter extends RecyclerView.Adapter<SongListAdapter.SongVi
         Picasso.with(appContext)
                 .load(songFormatUtil.getAlbumArtWorkUri(currentSong.albumId))
                 .resize(69, 69)
-                .placeholder(R.drawable.music_list_)
+                .placeholder(R.drawable.ic_album_black_24dp)
                 .centerCrop()
                 .into(holder.albumCover);
     }
