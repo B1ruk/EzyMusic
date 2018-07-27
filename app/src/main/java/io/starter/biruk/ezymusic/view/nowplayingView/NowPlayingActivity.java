@@ -352,6 +352,7 @@ public class NowPlayingActivity extends AppCompatActivity implements NowPlayingV
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
+                currentDurationView.setText(songFormatUtil.formatSongDuration(seekBar.getProgress()));
                 nowPlayingPresenter.seekTo(seekBar.getProgress());
             }
         });
