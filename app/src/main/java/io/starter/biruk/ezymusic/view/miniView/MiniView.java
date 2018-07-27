@@ -12,8 +12,6 @@ public interface MiniView {
     void launchNowPlaying();
     void play(int index, List<Song> songList);
 
-    void playPauseToggle();
-
     void displayPauseIcon();
     void displayPlayIcon();
 }

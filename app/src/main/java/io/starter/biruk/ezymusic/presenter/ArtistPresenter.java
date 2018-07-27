@@ -1,18 +1,15 @@
 package io.starter.biruk.ezymusic.presenter;
 
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import io.reactivex.Scheduler;
 import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.functions.Consumer;
 import io.reactivex.observers.DisposableSingleObserver;
 import io.starter.biruk.ezymusic.bus.ReplayEventBus;
 import io.starter.biruk.ezymusic.bus.RxEventBus;
-import io.starter.biruk.ezymusic.events.ArtistSelectedEvent;
+import io.starter.biruk.ezymusic.events.view.ArtistSelectedEvent;
 import io.starter.biruk.ezymusic.events.adapterPosition.ArtistAdapterPositionEvent;
 import io.starter.biruk.ezymusic.model.dao.artistsDAO.ArtistRepository;
 import io.starter.biruk.ezymusic.model.entity.Song;

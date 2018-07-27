@@ -12,16 +12,25 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".view.mainView.MainActivity">
+        <activity
+            android:name=".view.mainView.MainActivity"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".view.nowplayingView.NowPlayingActivity" />
-        <activity android:name=".view.albumsView.SelectedAlbumActivity" />
-        <activity android:name=".view.artistsView.SelectedArtistActivity" />
+        <activity
+            android:name=".view.nowplayingView.NowPlayingActivity"
+            android:screenOrientation="portrait"
+            />
+        <activity
+            android:name=".view.albumsView.SelectedAlbumActivity"
+            android:screenOrientation="portrait"/>
+        <activity
+            android:name=".view.artistsView.SelectedArtistActivity"
+            android:screenOrientation="portrait"/>
 
         <service
             android:name=".service.PlayBackService"
@@ -31,6 +40,7 @@
 
         <activity
             android:name=".view.searchView.SearchLibraryActivity"
+            android:screenOrientation="portrait"
             android:parentActivityName=".view.mainView.MainActivity"></activity>
     </application>
 

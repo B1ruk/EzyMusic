@@ -5,13 +5,10 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
-import android.widget.ProgressBar;
 
 import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.functions.Consumer;
 import io.starter.biruk.ezymusic.bus.ReplayEventBus;
-import io.starter.biruk.ezymusic.bus.RxEventBus;
-import io.starter.biruk.ezymusic.events.SongLoadCompletedEvent;
+import io.starter.biruk.ezymusic.events.view.SongLoadCompletedEvent;
 
 /**
  * Created by Biruk on 10/13/2017.

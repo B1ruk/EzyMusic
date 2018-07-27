@@ -1,14 +1,12 @@
 package io.starter.biruk.ezymusic.presenter;
 
-import android.graphics.Bitmap;
-
 import java.util.List;
 
 import io.reactivex.Scheduler;
 import io.reactivex.annotations.NonNull;
 import io.reactivex.observers.DisposableSingleObserver;
 import io.starter.biruk.ezymusic.bus.ReplayEventBus;
-import io.starter.biruk.ezymusic.events.SelectedArtistEvent;
+import io.starter.biruk.ezymusic.events.view.SelectedArtistEvent;
 import io.starter.biruk.ezymusic.model.dao.FavoriteDao.FavoriteRepository;
 import io.starter.biruk.ezymusic.model.entity.Song;
 import io.starter.biruk.ezymusic.view.playlistView.PlaylistView;

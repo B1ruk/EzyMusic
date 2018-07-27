@@ -19,37 +19,38 @@ import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.RemoteViews;
-import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import io.reactivex.Observable;
+import io.reactivex.Scheduler;
+import io.reactivex.Single;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.observers.DisposableSingleObserver;
+import io.reactivex.schedulers.Schedulers;
 import io.starter.biruk.ezymusic.R;
-import io.starter.biruk.ezymusic.bus.ReplayEventBus;
 import io.starter.biruk.ezymusic.bus.RxEventBus;
-import io.starter.biruk.ezymusic.bus.media.MediaReplayEventBus;
 import io.starter.biruk.ezymusic.bus.media.MediaRxEventBus;
-import io.starter.biruk.ezymusic.events.media.ChangePlayPauseEvent;
-import io.starter.biruk.ezymusic.events.media.PlayTrackEvent;
-import io.starter.biruk.ezymusic.events.media.SaveIndexEvent;
-import io.starter.biruk.ezymusic.events.media.SeekToEvent;
-import io.starter.biruk.ezymusic.events.media.TogglePlayEvent;
-import io.starter.biruk.ezymusic.events.media.TrackChangeEvent;
-import io.starter.biruk.ezymusic.events.media.playbackMode.RepeatPostEvent;
-import io.starter.biruk.ezymusic.events.media.playbackMode.RepeatToggleEvent;
-import io.starter.biruk.ezymusic.events.media.playbackMode.ShufflePostEvent;
-import io.starter.biruk.ezymusic.events.media.playbackMode.ShuffleToggleEvent;
+import io.starter.biruk.ezymusic.events.SeekToEvent;
+import io.starter.biruk.ezymusic.events.media.MediaStatusEvent;
+import io.starter.biruk.ezymusic.events.media.PlayerToggleEvent;
+import io.starter.biruk.ezymusic.events.media.RequestMediaStatusEvent;
+import io.starter.biruk.ezymusic.events.media.playbackMode.PlayPauseStatusEvent;
+import io.starter.biruk.ezymusic.events.media.playbackMode.QueueEvent;
+import io.starter.biruk.ezymusic.events.media.playbackMode.RepeatStatusEvent;
+import io.starter.biruk.ezymusic.events.media.playbackMode.ShuffleStatusEvent;
 import io.starter.biruk.ezymusic.model.entity.Song;
 import io.starter.biruk.ezymusic.service.playbackMode.PlayState;
 import io.starter.biruk.ezymusic.service.playbackMode.Repeat;
 import io.starter.biruk.ezymusic.service.playbackMode.Shuffle;
 import io.starter.biruk.ezymusic.util.AlbumArtworkUtil;
 import io.starter.biruk.ezymusic.util.SongFormatUtil;
-import io.starter.biruk.ezymusic.view.mainView.MainActivity;
 import io.starter.biruk.ezymusic.view.nowplayingView.NowPlayingActivity;
 
 import static io.starter.biruk.ezymusic.service.playbackMode.PlayState.NEXT;
@@ -68,10 +69,6 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
     public static final String CURRENT_POSITION_INTENT_KEY = "io.starter.biruk.ezymusic.service.KEY";
     private static final int NOTIFICATION_ID = 3870;
 
-    /*
-    * a broadcast manager for handling the CURRENT_POSITION
-    * event
-    * */
     private LocalBroadcastManager localBroadcastManager;
     private Binder serviceBinder = new PlayBackBinder();
 
@@ -96,6 +93,14 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
     private CompositeDisposable mediaServiceCompositeDisposable;
     private AlbumArtworkUtil albumArtworkUtil;
 
+
+    public BroadcastReceiver becomingNoisyReciever = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            pause();
+        }
+    };
+
     private final BroadcastReceiver mediaIntentReciever = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -103,69 +108,44 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
         }
     };
 
-
-    /*
-    *  subscriber that listens for ToggleEvent and toggles the media playback
-    * */
-    private Disposable playPauseToggle = RxEventBus.getInstance().subscribe(o -> {
-        if (o instanceof TogglePlayEvent) {
-            if (isPlaying()) {
-                pause();
-            } else {
-                resume();
-            }
-            updateNotification();
-        }
-    });
-
-    /*
-    * subscriber that listens for play event and plays the specified track by using
-    * the index that it received from the event publisher
-    * */
-    private Disposable playTrack = RxEventBus.getInstance().subscribe(o -> {
-        if (o instanceof PlayTrackEvent) {
-            int index1 = ((PlayTrackEvent) o).getIndex();
-            switch (shuffle) {
-                case ON:
-                    this.shuffledIndex = index1;
-                    break;
-                case OFF:
-                    setIndex(index1);
-                    break;
-            }
-            play();
-            updateNotification();
-        }
-    });
-
-    private Disposable seekTo = MediaRxEventBus.getInstance().subscribe(o -> {
-        if (o instanceof SeekToEvent) {
-            int index1 = ((SeekToEvent) o).getIndex();
-            seekTo(index1);
-        }
-    });
-
-
     @Override
     public void onCreate() {
         super.onCreate();
 
         initComponents();
-
         initMedia();
-
         initPlayBackMode();
-
-        playBackModeListener();
-
         registerBecomingNoisyReciever();
-
-        mediaServiceCompositeDisposable.addAll(playPauseToggle,playTrack,seekTo);
-
         initMediaReciever();
+        initMediaEventListener();
+
+
+    }
+
+    private void initComponents() {
+        this.songList = new ArrayList<>();
+        this.index = 0;
+
+        mediaServiceCompositeDisposable = new CompositeDisposable();
+
+        localBroadcastManager = LocalBroadcastManager.getInstance(this);
 
         this.songFormatUtil = new SongFormatUtil(this);
         this.albumArtworkUtil = new AlbumArtworkUtil(this, songFormatUtil);
+
+    }
+
+    private void initMedia() {
+        if (mediaPlayer == null) {
+            mediaPlayer = new MediaPlayer();
+
+        }
+        mediaPlayer.setWakeMode(getBaseContext(), PowerManager.PARTIAL_WAKE_LOCK);
+
+        mediaPlayer.setOnCompletionListener(this);
+        mediaPlayer.setOnErrorListener(this);
+        mediaPlayer.setOnPreparedListener(this);
+
     }
 
     private void initMediaReciever() {
@@ -177,6 +157,61 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
         registerReceiver(mediaIntentReciever, filter);
     }
 
+    public void registerBecomingNoisyReciever() {
+        IntentFilter intentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
+        registerReceiver(becomingNoisyReciever, intentFilter);
+    }
+
+    public void initMediaEventListener() {
+        mediaServiceCompositeDisposable.add(
+                RxEventBus.getInstance().subscribe(o -> {
+
+                    if (o instanceof RequestMediaStatusEvent) {
+                        postMediaStatus();
+                    }
+
+                    if (o instanceof QueueEvent) {
+                        int index = ((QueueEvent) o).getIndex();
+                        List<Song> songs = ((QueueEvent) o).getSongs();
+
+                        setQueue(index, songs);
+                        play();
+                    }
+
+                    if (o instanceof PlayerToggleEvent) {
+                        PlayerToggleEvent toggleEvent = (PlayerToggleEvent) o;
+                        switch (toggleEvent.getMediaTrigger()) {
+                            case PLAY_PAUSE:
+                                togglePlayPause();
+                                break;
+                            case NEXT:
+                                next();
+                                break;
+                            case PREVIOUS:
+                                previous();
+                                break;
+                            case TOGGLE_SHUFFLE:
+                                toggleShuffle();
+                                break;
+                            case TOGGLE_REPEAT:
+                                toggleRepeat();
+                                break;
+                        }
+                    }
+                })
+        );
+
+        mediaServiceCompositeDisposable.add(
+                MediaRxEventBus.getInstance().subscribe(o -> {
+                    if (o instanceof SeekToEvent) {
+                        int progress = ((SeekToEvent) o).getProgress();
+                        seekTo(progress);
+                    }
+                })
+        );
+    }
+
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
@@ -186,9 +221,32 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
         return START_NOT_STICKY;
     }
 
-    private void playBackModeListener() {
-        repeatModeListener();
-        shuffleModeListener();
+    public void togglePlayPause() {
+        MediaRxEventBus.getInstance().publish(new PlayPauseStatusEvent(!isPlaying()));
+        if (isPlaying()){
+            pause();
+        }else {
+            resume();
+        }
+        updateNotification();
+    }
+
+    public void toggleShuffle() {
+        this.shuffle = Shuffle.toggleMode(this.shuffle);
+        switch (shuffle) {
+            case ON:
+                shuffleSongs();
+                break;
+            case OFF:
+                unshuffleSongs();
+                break;
+        }
+        MediaRxEventBus.getInstance().publish(new ShuffleStatusEvent(shuffle));
+    }
+
+    public void toggleRepeat() {
+        this.repeat = Repeat.toggleMode(this.repeat);
+        MediaRxEventBus.getInstance().publish(new RepeatStatusEvent(repeat));
     }
 
     public void updateNotification() {
@@ -270,13 +328,8 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
 
         switch (action) {
             case PLAY_PAUSE:
-                if (isPlaying()) {
-                    pause();
-                } else {
-                    resume();
-                }
-                updateNotification();
-                MediaReplayEventBus.getInstance().post(new ChangePlayPauseEvent(isPlaying()));
+                togglePlayPause();
+//                updateNotification();
                 break;
             case PREVIOUS:
                 previous();
@@ -288,64 +341,9 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
 
     }
 
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-
-        mediaServiceCompositeDisposable.clear();
-    }
-
-    /*
-        * listens for shuffle mode event,then toggles the shuffle state
-        * when the event occurs and finally it will post the event ShufflePostEvent
-        * */
-    private void shuffleModeListener() {
-        mediaServiceCompositeDisposable.add(
-                MediaRxEventBus.getInstance().subscribe(o -> {
-                    if (o instanceof ShuffleToggleEvent) {
-                        //toggle the state
-                        shuffle = Shuffle.toggleMode(shuffle);
-                        if (shuffle == Shuffle.ON) {
-                            shuffleSongs();
-                        } else if (shuffle == Shuffle.OFF) {
-                            unshuffleSongs();
-                        }
-                        MediaReplayEventBus.getInstance().post(new ShufflePostEvent(shuffle));
-                    }
-                })
-        );
-
-    }
-
-    /*
-    * listens for repeat mode event,when the event occurs it will toggle
-    * the repeat mode state and finally it will post the event RepeatPostEvent
-    * */
-    private void repeatModeListener() {
-        mediaServiceCompositeDisposable.add(
-                MediaRxEventBus.getInstance().subscribe(o -> {
-                    if (o instanceof RepeatToggleEvent) {
-                        repeat = Repeat.toggleMode(repeat);
-                        MediaReplayEventBus.getInstance().post(new RepeatPostEvent(repeat));
-                    }
-                })
-        );
-    }
-
     private void initPlayBackMode() {
         this.shuffle = Shuffle.OFF;
         this.repeat = Repeat.NONE;
-    }
-
-    private void initComponents() {
-        this.songList = new ArrayList<>();
-        this.index = 0;
-
-        mediaServiceCompositeDisposable = new CompositeDisposable();
-
-        localBroadcastManager = LocalBroadcastManager.getInstance(this);
-
     }
 
     private boolean requestAudioFocus() {
@@ -373,19 +371,6 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
         return serviceBinder;
     }
 
-    private void initMedia() {
-        if (mediaPlayer == null) {
-            mediaPlayer = new MediaPlayer();
-
-        }
-        mediaPlayer.setWakeMode(getBaseContext(), PowerManager.PARTIAL_WAKE_LOCK);
-
-        mediaPlayer.setOnCompletionListener(this);
-        mediaPlayer.setOnErrorListener(this);
-        mediaPlayer.setOnPreparedListener(this);
-
-    }
-
     public void setQueue(int index, List<Song> songs) {
         this.index = index;
         this.songList = songs;
@@ -410,7 +395,7 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
     public void unshuffleSongs() {
         Song currentSong = shuffledSongList.get(shuffledIndex);
 
-        for (int i = 0; i < shuffledSongList.size(); i++) {
+        for (int i = 0; i < songList.size(); i++) {
             if (songList.get(i) == currentSong) {
                 setIndex(i);
             }
@@ -421,11 +406,9 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
         switch (shuffle) {
             case ON:
                 playShufflePreviousTrack();
-                MediaReplayEventBus.getInstance().post(new TrackChangeEvent(shuffledIndex, shuffledSongList));
                 break;
             case OFF:
                 playPreviousTrack();
-                MediaReplayEventBus.getInstance().post(new TrackChangeEvent(index, songList));
                 break;
         }
     }
@@ -452,11 +435,9 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
         switch (shuffle) {
             case ON:
                 playShuffleNextTrack();
-                MediaReplayEventBus.getInstance().post(new TrackChangeEvent(shuffledIndex, shuffledSongList));
                 break;
             case OFF:
                 playNextTrack();
-                MediaReplayEventBus.getInstance().post(new TrackChangeEvent(index, songList));
                 break;
         }
 
@@ -526,8 +507,6 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
         if (!mediaPlayer.isPlaying()) {
             mediaPlayer.start();
 
-            //this event is useful for updating the play/pause event
-            MediaReplayEventBus.getInstance().post(new ChangePlayPauseEvent(mediaPlayer.isPlaying()));
         }
     }
 
@@ -538,8 +517,6 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
             Log.i(TAG, "pause");
             mediaPlayer.pause();
 
-            // this event is useful for updating the play/pause event
-            MediaReplayEventBus.getInstance().post(new ChangePlayPauseEvent(mediaPlayer.isPlaying()));
         }
     }
 
@@ -562,55 +539,6 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
     }
 
     @Override
-    public void onCompletion(MediaPlayer mp) {
-        Log.i(TAG, " onCompletion");
-
-        MediaReplayEventBus.getInstance().post(new ChangePlayPauseEvent(mediaPlayer.isPlaying()));
-
-        switch (shuffle) {
-            case ON:
-
-                if (shuffledIndex < shuffledSongList.size() - 1) {
-                    if (repeat == Repeat.NONE || repeat == Repeat.ALL) {
-                        ++shuffledIndex;
-                    }
-                    play();
-                    updateNotification();
-                    ReplayEventBus.getInstance().post(new SaveIndexEvent(shuffledIndex));
-                } else if (shuffledIndex == shuffledSongList.size() - 1) {
-                    if (repeat == Repeat.ALL || repeat == Repeat.ONE) {
-                        //start from the beginning
-                        shuffledIndex = 0;
-                        play();
-                        updateNotification();
-                        ReplayEventBus.getInstance().post(new SaveIndexEvent(shuffledIndex));
-                    }
-                }
-                break;
-            case OFF:
-
-                if (index < songList.size() - 1) {
-                    if (repeat == Repeat.NONE || repeat == Repeat.ALL) {
-                        ++index;
-                    }
-                    play();
-                    updateNotification();
-                    ReplayEventBus.getInstance().post(new SaveIndexEvent(index));
-                } else if (index == songList.size() - 1) {
-                    if (repeat == Repeat.ALL || repeat == Repeat.ONE) {
-                        //start from the beginning
-                        index = 0;
-                        play();
-                        updateNotification();
-                        ReplayEventBus.getInstance().post(new SaveIndexEvent(index));
-                    }
-                }
-                break;
-        }
-
-    }
-
-    @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
         Log.e(TAG, "onError");
         return true;
@@ -622,11 +550,11 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
             mediaPlayer.start();
             Log.i(TAG, " onPrepared");
 
-            MediaReplayEventBus.getInstance().post(new ChangePlayPauseEvent(mediaPlayer.isPlaying()));
-
             Thread updateCurrentElapsedTime = new Thread(this::updateCurrentPosition);
             updateNotification();
             updateCurrentElapsedTime.start();
+
+            postMediaStatus();
         }
     }
 
@@ -649,21 +577,58 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
         localBroadcastManager.sendBroadcast(intent);
     }
 
-    /*
-    * setting broadcast receiver for becomingNoisyEvent
-    * */
-    private BroadcastReceiver becomingNoisyReciever = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            pause();
-        }
-    };
+    @Override
+    public void onCompletion(MediaPlayer mp) {
+        Log.i(TAG, " onCompletion");
 
-    public void registerBecomingNoisyReciever() {
-        IntentFilter intentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
-        registerReceiver(becomingNoisyReciever, intentFilter);
+        switch (shuffle) {
+            case ON:
+
+                if (shuffledIndex < shuffledSongList.size() - 1) {
+                    if (repeat == Repeat.NONE || repeat == Repeat.ALL) {
+                        ++shuffledIndex;
+                    }
+                    play();
+                    updateNotification();
+                } else if (shuffledIndex == shuffledSongList.size() - 1) {
+                    if (repeat == Repeat.ALL || repeat == Repeat.ONE) {
+                        //start from the beginning
+                        shuffledIndex = 0;
+                        play();
+                        updateNotification();
+                    }
+                }
+                break;
+            case OFF:
+
+                if (index < songList.size() - 1) {
+                    if (repeat == Repeat.NONE || repeat == Repeat.ALL) {
+                        ++index;
+                    }
+                    play();
+                    updateNotification();
+                } else if (index == songList.size() - 1) {
+                    if (repeat == Repeat.ALL || repeat == Repeat.ONE) {
+                        //start from the beginning
+                        index = 0;
+                        play();
+                        updateNotification();
+                    }
+                }
+                break;
+        }
+
     }
 
+
+    public void postMediaStatus() {
+        MediaRxEventBus.getInstance().publish(new MediaStatusEvent(
+                isPlaying(),
+                shuffle,
+                repeat,
+                new QueueEvent(getIndex(), songList)
+        ));
+    }
 
     public int getIndex() {
         return index;
@@ -671,5 +636,13 @@ public class PlayBackService extends Service implements MediaPlayer.OnPreparedLi
 
     public void setIndex(int index) {
         this.index = index;
+    }
+
+    @Override
+    public void onDestroy() {
+        unregisterReceiver(mediaIntentReciever);
+        unregisterReceiver(becomingNoisyReciever);
+        mediaServiceCompositeDisposable.clear();
+        super.onDestroy();
     }
 }

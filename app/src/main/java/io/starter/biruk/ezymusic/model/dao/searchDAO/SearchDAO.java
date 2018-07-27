@@ -1,14 +1,10 @@
 package io.starter.biruk.ezymusic.model.dao.searchDAO;
 
-import android.content.Context;
-
 import java.util.List;
 
 import io.reactivex.Observable;
-import io.reactivex.Single;
 import io.starter.biruk.ezymusic.bus.ReplayEventBus;
-import io.starter.biruk.ezymusic.events.SongLoadCompletedEvent;
-import io.starter.biruk.ezymusic.model.dao.songDao.SongDao;
+import io.starter.biruk.ezymusic.events.view.SongLoadCompletedEvent;
 import io.starter.biruk.ezymusic.model.entity.Song;
 
 /**

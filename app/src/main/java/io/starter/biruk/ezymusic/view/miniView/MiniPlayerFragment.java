@@ -24,10 +24,11 @@ import java.util.List;
 
 import io.starter.biruk.ezymusic.R;
 import io.starter.biruk.ezymusic.bus.RxEventBus;
-import io.starter.biruk.ezymusic.events.media.TogglePlayEvent;
+import io.starter.biruk.ezymusic.events.media.PlayerToggleEvent;
 import io.starter.biruk.ezymusic.model.entity.Song;
 import io.starter.biruk.ezymusic.presenter.MiniPlayerPresenter;
 import io.starter.biruk.ezymusic.service.PlayBackService;
+import io.starter.biruk.ezymusic.service.playbackMode.MediaTrigger;
 import io.starter.biruk.ezymusic.util.ImageTransform.CircleTransform;
 import io.starter.biruk.ezymusic.util.SongFormatUtil;
 import io.starter.biruk.ezymusic.view.nowplayingView.NowPlayingActivity;
@@ -43,24 +44,17 @@ public class MiniPlayerFragment extends Fragment implements MiniView {
     private TextView titleView;
     private ImageView artworkView;
 
-    //used for play/Pause
     private ImageButton playPauseBtn;
-
 
     private CardView miniPlayerCardView;
 
     private MiniPlayerPresenter miniPlayerPresenter;
-
     private SongFormatUtil songFormatUtil;
-
     private PlayBackService playBackService;
 
     //used for checking whether the service is bound or not
     private boolean serviceBound;
 
-    /*
-    * establishing service connection
-    * */
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
@@ -113,33 +107,25 @@ public class MiniPlayerFragment extends Fragment implements MiniView {
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
         miniPlayerCardView.setOnClickListener(v -> miniPlayerPresenter.launchNowPlayingView());
     }
 
     @Override
     public void onStart() {
         super.onStart();
-
-        miniPlayerPresenter.playListener();
     }
 
     @Override
     public void onResume() {
         super.onResume();
 
-        playPauseToggle();
+
+        playPauseBtn.setOnClickListener(v -> RxEventBus.getInstance().publish(new PlayerToggleEvent(MediaTrigger.PLAY_PAUSE)));
 
         miniPlayerCardView.setVisibility(View.GONE);
-        miniPlayerPresenter.updateMiniPlayer();
-        miniPlayerPresenter.playPauseUpdater();
-        miniPlayerPresenter.trackChangeListener();
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        miniPlayerPresenter.cleanUp();
+        miniPlayerPresenter.requestMediaStatus();
+        miniPlayerPresenter.loadMediaStatus();
+        miniPlayerPresenter.playPauseEventListener();
     }
 
     @Override
@@ -168,21 +154,13 @@ public class MiniPlayerFragment extends Fragment implements MiniView {
             Log.i(TAG, "play");
             playBackService.setQueue(index, songList);
             playBackService.play();
-            playBackService.updateNotification();
         }
     }
 
     @Override
     public void launchNowPlaying() {
-        miniPlayerPresenter.saveIndex();
-
         Intent intent = new Intent(getContext(), NowPlayingActivity.class);
         startActivity(intent);
-    }
-
-    @Override
-    public void playPauseToggle() {
-        playPauseBtn.setOnClickListener(v -> RxEventBus.getInstance().publish(new TogglePlayEvent()));
     }
 
     @Override
@@ -194,4 +172,11 @@ public class MiniPlayerFragment extends Fragment implements MiniView {
     public void displayPlayIcon() {
         playPauseBtn.setImageDrawable(getResources().getDrawable(R.drawable.ic_play_arrow_24dp));
     }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        miniPlayerPresenter.cleanUp();
+    }
+
 }

@@ -9,11 +9,9 @@ import io.starter.biruk.ezymusic.bus.ReplayEventBus;
 import io.starter.biruk.ezymusic.bus.RxEventBus;
 import io.starter.biruk.ezymusic.bus.media.MediaReplayEventBus;
 import io.starter.biruk.ezymusic.bus.media.MediaRxEventBus;
-import io.starter.biruk.ezymusic.events.SelectedSongQueueEvent;
-import io.starter.biruk.ezymusic.events.media.ChangePlayPauseEvent;
-import io.starter.biruk.ezymusic.events.media.PlayEvent;
-import io.starter.biruk.ezymusic.events.media.SaveIndexEvent;
-import io.starter.biruk.ezymusic.events.media.TrackChangeEvent;
+import io.starter.biruk.ezymusic.events.media.MediaStatusEvent;
+import io.starter.biruk.ezymusic.events.media.RequestMediaStatusEvent;
+import io.starter.biruk.ezymusic.events.media.playbackMode.PlayPauseStatusEvent;
 import io.starter.biruk.ezymusic.model.entity.Song;
 import io.starter.biruk.ezymusic.view.miniView.MiniView;
 
@@ -30,54 +28,44 @@ public class MiniPlayerPresenter {
     public MiniPlayerPresenter(MiniView miniView) {
         this.miniView = miniView;
 
-        songList=new LinkedList<>();
+        songList = new LinkedList<>();
         compositeDisposable = new CompositeDisposable();
     }
 
-    public void updateMiniPlayer() {
-        ReplayEventBus.getInstance().subscribe(o -> {
-            if (o instanceof SelectedSongQueueEvent) {
-                index = ((SelectedSongQueueEvent) o).getIndex();
-                songList = ((SelectedSongQueueEvent) o).getSongList();
-            }
-
-            if (o instanceof SaveIndexEvent) {
-                index = ((SaveIndexEvent) o).getIndex();
-            }
-
-            if (!songList.isEmpty()) {
-
-                Song song = songList.get(index);
-                miniView.updateUi(song);
-            }
-
-        });
-
+    public void requestMediaStatus() {
+        RxEventBus.getInstance().publish(new RequestMediaStatusEvent());
     }
 
-    /*
-    * listens for play event and calls the appropriate view
-    * */
-    public void playListener() {
-        RxEventBus.getInstance().subscribe(new Consumer<Object>() {
-            @Override
-            public void accept(Object o) throws Exception {
-                if (o instanceof PlayEvent) {
-                    miniView.play(index, songList);
-                }
-            }
-        });
-    }
-
-    /*
-    * by subscribing to the MediaRxEventBus
-    * updates the play/pause icons
-    * */
-    public void playPauseUpdater() {
+    public void loadMediaStatus() {
         compositeDisposable.add(
-                MediaReplayEventBus.getInstance().subscribe(o -> {
-                    if (o instanceof ChangePlayPauseEvent) {
-                        boolean playing = ((ChangePlayPauseEvent) o).isPlaying();
+                MediaRxEventBus.getInstance().subscribe(o -> {
+                    if (o instanceof MediaStatusEvent) {
+                        MediaStatusEvent state = (MediaStatusEvent) o;
+
+                        updateQueue(state.getQueueEvent().getIndex(), state.getQueueEvent().getSongs());
+                        updateView();
+
+                        if (state.isPlaying()) {
+                            miniView.displayPauseIcon();
+                        } else {
+                            miniView.displayPlayIcon();
+                        }
+                    }
+                })
+        );
+    }
+
+    public void updateView() {
+        if (!songList.isEmpty()) {
+            miniView.updateUi(songList.get(index));
+        }
+    }
+
+    public void playPauseEventListener() {
+        compositeDisposable.add(
+                MediaRxEventBus.getInstance().subscribe(o -> {
+                    if (o instanceof PlayPauseStatusEvent) {
+                        boolean playing = ((PlayPauseStatusEvent) o).isPlaying();
 
                         if (playing)
                             miniView.displayPauseIcon();
@@ -88,44 +76,15 @@ public class MiniPlayerPresenter {
         );
     }
 
-    /*
-    * updates the view when previous or next buttons
-    * are triggered from the notification
-    * */
-    public void trackChangeListener(){
-        compositeDisposable.add(
-                MediaReplayEventBus.getInstance().subscribe(o->{
-                    if (o instanceof TrackChangeEvent){
-                        int index = ((TrackChangeEvent) o).getIndex();
-                        List<Song> songs = ((TrackChangeEvent) o).getSongs();
-
-                        updateQueue(index,songs);
-                        miniView.updateUi(songs.get(index));
-                    }
-                })
-        );
-    }
-
     private void updateQueue(int index, List<Song> songs) {
-        this.index=index;
-        this.songList=songs;
+        this.index = index;
+        this.songList = songs;
     }
 
-    public void saveIndex(){
-        ReplayEventBus.getInstance().post(new SaveIndexEvent(index));
-    }
-
-    /*
-    * opens the nowplaying view
-    * */
     public void launchNowPlayingView() {
         miniView.launchNowPlaying();
     }
 
-
-    /*
-    * cleans the compositeDisposable
-    * */
     public void cleanUp() {
         if (compositeDisposable != null) {
             compositeDisposable.clear();

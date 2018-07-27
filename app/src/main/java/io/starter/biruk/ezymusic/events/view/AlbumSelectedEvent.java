@@ -1,4 +1,4 @@
-package io.starter.biruk.ezymusic.events;
+package io.starter.biruk.ezymusic.events.view;
 
 /**
  * Created by Biruk on 10/10/2017.

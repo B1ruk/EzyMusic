@@ -4,20 +4,11 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentStatePagerAdapter;
-import android.support.v4.content.LocalBroadcastManager;
-import android.support.v4.view.ViewPager;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.GestureDetector;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.animation.Animation;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
@@ -25,37 +16,33 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
-import com.squareup.picasso.Target;
 
-import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import io.reactivex.Maybe;
+import io.reactivex.Observable;
+import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.annotations.NonNull;
+import io.reactivex.functions.Action;
+import io.reactivex.observers.DisposableObserver;
 import io.reactivex.schedulers.Schedulers;
 import io.starter.biruk.ezymusic.R;
-import io.starter.biruk.ezymusic.bus.ReplayEventBus;
 import io.starter.biruk.ezymusic.bus.RxEventBus;
-import io.starter.biruk.ezymusic.bus.media.MediaReplayEventBus;
-import io.starter.biruk.ezymusic.bus.media.MediaRxEventBus;
-import io.starter.biruk.ezymusic.events.media.SeekToEvent;
-import io.starter.biruk.ezymusic.events.media.TogglePlayEvent;
-import io.starter.biruk.ezymusic.events.media.playbackMode.RepeatToggleEvent;
-import io.starter.biruk.ezymusic.events.media.playbackMode.ShuffleToggleEvent;
-import io.starter.biruk.ezymusic.events.view.CurrentSongEvent;
+import io.starter.biruk.ezymusic.events.media.PlayerToggleEvent;
 import io.starter.biruk.ezymusic.model.dao.FavoriteDao.FavoriteDao;
 import io.starter.biruk.ezymusic.model.entity.Song;
 import io.starter.biruk.ezymusic.presenter.NowPlayingPresenter;
 import io.starter.biruk.ezymusic.service.PlayBackService;
+import io.starter.biruk.ezymusic.service.playbackMode.MediaTrigger;
 import io.starter.biruk.ezymusic.service.playbackMode.Repeat;
 import io.starter.biruk.ezymusic.service.playbackMode.Shuffle;
 import io.starter.biruk.ezymusic.util.ImageTransform.CircleTransform;
-import io.starter.biruk.ezymusic.util.ImageTransform.blur.BlurTransform;
 import io.starter.biruk.ezymusic.util.SongFormatUtil;
 import io.starter.biruk.ezymusic.util.ViewAnimatiorUtil;
 import io.starter.biruk.ezymusic.util.animation.FadeAnimation;
-import io.starter.biruk.ezymusic.util.animation.TranslateAnimation;
 import io.starter.biruk.ezymusic.util.view.Direction;
 import io.starter.biruk.ezymusic.util.view.OnSwipeListener;
 import io.starter.biruk.ezymusic.view.nowplayingView.nowPlayingViewFragment.NowPlayingFragment;
@@ -80,28 +67,16 @@ public class NowPlayingActivity extends AppCompatActivity implements NowPlayingV
 
     private LinearLayout rootLayout;
 
-    /*
-    * views used for elapsed time
-    * */
     private TextView currentDurationView;
     private TextView durationView;
     private SeekBar elapsedTimeSeekBar;
 
-    /*
-    * views for changing playback mode
-    * */
     private ImageButton shuffleButton;
     private ImageButton repeatButton;
 
-    /*
-    *  container for nowplaying fragment
-    * */
     private FrameLayout mainViewContainer;
 
 
-    /*
-    *   buttons used for media control
-    * */
     private ImageButton playButton;
     private ImageButton previousButton;
     private ImageButton nextButton;
@@ -111,7 +86,6 @@ public class NowPlayingActivity extends AppCompatActivity implements NowPlayingV
     private NowPlayingFragment nowPlayingFragment;
 
 
-    //used for recieving the elapsed time update events
     private BroadcastReceiver elapsedTimeReciever = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -128,23 +102,17 @@ public class NowPlayingActivity extends AppCompatActivity implements NowPlayingV
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_now_playing);
-
         initWidgets();
-
         nowPlayingFragment = new NowPlayingFragment();
-
         bindNowPlayingFragment();
-
         songFormatUtil = new SongFormatUtil(this);
-
         nowPlayingPresenter = new NowPlayingPresenter(this, new FavoriteDao(this),
                 Schedulers.io(), AndroidSchedulers.mainThread());
 
         initMainView();
-
     }
 
-    private void initMainView() {
+    public void initMainView() {
         final FadeAnimation fadeAnimation = new FadeAnimation(mainViewContainer, 1250, 0.0f, 1.0f, new DecelerateInterpolator(2.0f));
 
         swipeDetector = new GestureDetector(this, new OnSwipeListener() {
@@ -171,18 +139,14 @@ public class NowPlayingActivity extends AppCompatActivity implements NowPlayingV
         });
     }
 
-    private void bindNowPlayingFragment() {
+    public void bindNowPlayingFragment() {
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.now_playing_main_view_container, nowPlayingFragment)
                 .commit();
     }
 
-    /*
-    * binds variable to the view
-    *
-    * */
-    private void initWidgets() {
+    public void initWidgets() {
         currentSongCoverSmall = (ImageView) findViewById(R.id.current_song_mini_image_view);
         currentSongArtistView = (TextView) findViewById(R.id.current_song_mini_artist);
         currentSongTitleView = (TextView) findViewById(R.id.current_song_mini_title);
@@ -209,16 +173,11 @@ public class NowPlayingActivity extends AppCompatActivity implements NowPlayingV
     @Override
     protected void onStart() {
         super.onStart();
-
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-
-        nowPlayingPresenter.loadList();
-        nowPlayingPresenter.refresh();
-        nowPlayingPresenter.updateCurrentView();
 
         favoriteBtn.setOnClickListener(v -> {
             new ViewAnimatiorUtil(getBaseContext()).rotateY(favoriteBtn, 360);
@@ -227,35 +186,25 @@ public class NowPlayingActivity extends AppCompatActivity implements NowPlayingV
 
         seekBarListener();
         initMediaControlBtns();
-
-        nowPlayingPresenter.shuffleModeToggleListener();
-        nowPlayingPresenter.repeatModeListener();
-        nowPlayingPresenter.playPauseUpdater();
-        nowPlayingPresenter.trackChangeListener();
-
         LocalBroadcastManager.getInstance(this).registerReceiver(elapsedTimeReciever, new IntentFilter(PlayBackService.CURRENT_POSITION));
 
+        nowPlayingPresenter.loadMediaStatus();
+        nowPlayingPresenter.requestMediaStatus();
+        nowPlayingPresenter.mediaCallbackListener();
     }
-
 
     @Override
     protected void onPause() {
         super.onPause();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(elapsedTimeReciever);
-
-
     }
 
     @Override
     public void updateBackground(Song song) {
-
-        /*
-        * updates the fragments artwork
-        * */
         nowPlayingFragment.displayArtWork(song);
     }
 
-    private void initMediaControlBtns() {
+    public void initMediaControlBtns() {
         playPauseToggle();
         nextSong();
         previousSong();
@@ -264,17 +213,33 @@ public class NowPlayingActivity extends AppCompatActivity implements NowPlayingV
         repeatToggle();
     }
 
-    private void shuffleToggle() {
+
+    @Override
+    public void playPauseToggle() {
+        playButton.setOnClickListener(v -> RxEventBus.getInstance().publish(new PlayerToggleEvent(MediaTrigger.PLAY_PAUSE)));
+    }
+
+    @Override
+    public void nextSong() {
+        nextButton.setOnClickListener(v -> nowPlayingPresenter.playNext());
+    }
+
+    @Override
+    public void previousSong() {
+        previousButton.setOnClickListener(v -> nowPlayingPresenter.playPrevious());
+    }
+
+    public void shuffleToggle() {
         shuffleButton.setOnClickListener(v -> {
             new ViewAnimatiorUtil(getApplicationContext()).rotateY(shuffleButton, 485);
-            MediaRxEventBus.getInstance().publish(new ShuffleToggleEvent());
+            RxEventBus.getInstance().publish(new PlayerToggleEvent(MediaTrigger.TOGGLE_SHUFFLE));
         });
     }
 
-    private void repeatToggle() {
+    public void repeatToggle() {
         repeatButton.setOnClickListener(v -> {
             new ViewAnimatiorUtil(getApplicationContext()).rotateY(repeatButton, 485);
-            MediaRxEventBus.getInstance().publish(new RepeatToggleEvent());
+            RxEventBus.getInstance().publish(new PlayerToggleEvent(MediaTrigger.TOGGLE_REPEAT));
         });
     }
 
@@ -314,33 +279,23 @@ public class NowPlayingActivity extends AppCompatActivity implements NowPlayingV
         favoriteBtn.setColorFilter(getResources().getColor(R.color.bottomBarInActive));
     }
 
-    private int getIndex() {
-        return index;
+    public void updatePlayPause(boolean isPlaying) {
+        if (isPlaying) {
+            LocalBroadcastManager.getInstance(this).registerReceiver(elapsedTimeReciever, new IntentFilter(PlayBackService.CURRENT_POSITION));
+        } else {
+            LocalBroadcastManager.getInstance(this).unregisterReceiver(elapsedTimeReciever);
+        }
+        updatePlayPauseIcon(isPlaying);
     }
 
-    @Override
-    public void displayPauseIcon() {
-        playButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_pause_circle_filled_black_24dp));
-    }
 
-    @Override
-    public void displayPlayIcon() {
-        playButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_play_circle_filled_black_24dp));
-    }
+    public void updatePlayPauseIcon(boolean isPlaying) {
+        if (isPlaying) {
+            playButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_pause_circle_filled_black_24dp));
+        } else {
+            playButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_play_circle_filled_black_24dp));
 
-    @Override
-    public void playPauseToggle() {
-        playButton.setOnClickListener(v -> RxEventBus.getInstance().publish(new TogglePlayEvent()));
-    }
-
-    @Override
-    public void nextSong() {
-        nextButton.setOnClickListener(v -> nowPlayingPresenter.playNext());
-    }
-
-    @Override
-    public void previousSong() {
-        previousButton.setOnClickListener(v -> nowPlayingPresenter.playPrevious());
+        }
     }
 
     @Override
@@ -381,7 +336,7 @@ public class NowPlayingActivity extends AppCompatActivity implements NowPlayingV
         }
     }
 
-    private void seekBarListener() {
+    public void seekBarListener() {
         elapsedTimeSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -405,7 +360,6 @@ public class NowPlayingActivity extends AppCompatActivity implements NowPlayingV
     @Override
     protected void onStop() {
         super.onStop();
-        nowPlayingPresenter.saveState();
     }
 
     @Override

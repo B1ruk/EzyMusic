@@ -1,18 +1,10 @@
 package io.starter.biruk.ezymusic.view.songsView.adapter;
 
-import android.animation.ArgbEvaluator;
-import android.animation.ObjectAnimator;
-import android.animation.ValueAnimator;
-import android.app.Activity;
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewAnimationUtils;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageButton;
@@ -20,19 +12,16 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
-import com.squareup.picasso.Target;
 
 import java.util.List;
 
 import io.starter.biruk.ezymusic.R;
 import io.starter.biruk.ezymusic.bus.ReplayEventBus;
 import io.starter.biruk.ezymusic.bus.RxEventBus;
-import io.starter.biruk.ezymusic.events.SelectedSongQueueEvent;
 import io.starter.biruk.ezymusic.events.adapterPosition.SongAdapterPositionEvent;
-import io.starter.biruk.ezymusic.events.media.PlayEvent;
+import io.starter.biruk.ezymusic.events.media.playbackMode.QueueEvent;
 import io.starter.biruk.ezymusic.model.entity.Song;
 import io.starter.biruk.ezymusic.util.SongFormatUtil;
-import io.starter.biruk.ezymusic.util.ViewAnimatiorUtil;
 import io.starter.biruk.ezymusic.util.animation.FadeAnimation;
 import io.starter.biruk.ezymusic.util.widgets.fastscroller.BubbleTextGetter;
 
@@ -126,9 +115,8 @@ public class SongListAdapter extends RecyclerView.Adapter<SongListAdapter.SongVi
             FadeAnimation fadeAnimation=new FadeAnimation(v,600,0.0f,1.0f,
                     new DecelerateInterpolator(2.0f));
             fadeAnimation.animate();
-            ReplayEventBus.getInstance().post(new SelectedSongQueueEvent(getAdapterPosition(), songList));
+            RxEventBus.getInstance().publish(new QueueEvent(getAdapterPosition(), songList));
             ReplayEventBus.getInstance().post(new SongAdapterPositionEvent(getAdapterPosition()));
-            RxEventBus.getInstance().publish(new PlayEvent());
         }
 
         @Override

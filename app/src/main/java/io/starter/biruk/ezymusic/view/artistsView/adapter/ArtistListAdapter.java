@@ -2,7 +2,6 @@ package io.starter.biruk.ezymusic.view.artistsView.adapter;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,8 +15,8 @@ import java.util.List;
 import io.starter.biruk.ezymusic.R;
 import io.starter.biruk.ezymusic.bus.ReplayEventBus;
 import io.starter.biruk.ezymusic.bus.RxEventBus;
-import io.starter.biruk.ezymusic.events.ArtistSelectedEvent;
-import io.starter.biruk.ezymusic.events.SelectedArtistEvent;
+import io.starter.biruk.ezymusic.events.view.ArtistSelectedEvent;
+import io.starter.biruk.ezymusic.events.view.SelectedArtistEvent;
 import io.starter.biruk.ezymusic.events.adapterPosition.ArtistAdapterPositionEvent;
 import io.starter.biruk.ezymusic.model.entity.Song;
 import io.starter.biruk.ezymusic.util.SongFormatUtil;

@@ -18,9 +18,7 @@ public interface NowPlayingView {
 
     void updateTopView(Song song);
 
-    void displayPauseIcon();
-
-    void displayPlayIcon();
+    void updatePlayPause(boolean isPlaynig);
 
     void playPauseToggle();
 

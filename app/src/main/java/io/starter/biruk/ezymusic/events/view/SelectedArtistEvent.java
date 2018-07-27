@@ -1,4 +1,4 @@
-package io.starter.biruk.ezymusic.events;
+package io.starter.biruk.ezymusic.events.view;
 
 import java.util.List;
 

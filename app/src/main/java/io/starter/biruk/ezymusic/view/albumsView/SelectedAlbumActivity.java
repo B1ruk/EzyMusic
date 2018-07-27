@@ -11,14 +11,12 @@ import android.widget.ImageView;
 import com.squareup.picasso.Picasso;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.functions.Consumer;
 import io.starter.biruk.ezymusic.R;
 import io.starter.biruk.ezymusic.bus.ReplayEventBus;
-import io.starter.biruk.ezymusic.events.SelectedAlbumEvent;
+import io.starter.biruk.ezymusic.events.view.SelectedAlbumEvent;
 import io.starter.biruk.ezymusic.model.entity.Song;
 import io.starter.biruk.ezymusic.util.SongFormatUtil;
 import io.starter.biruk.ezymusic.view.songsView.adapter.SongListAdapter;

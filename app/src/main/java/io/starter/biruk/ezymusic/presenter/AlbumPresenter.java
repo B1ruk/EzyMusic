@@ -3,20 +3,16 @@ package io.starter.biruk.ezymusic.presenter;
 import android.util.Log;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import io.reactivex.Scheduler;
 import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.functions.Consumer;
-import io.reactivex.observers.DisposableObserver;
 import io.reactivex.observers.DisposableSingleObserver;
 import io.starter.biruk.ezymusic.bus.ReplayEventBus;
 import io.starter.biruk.ezymusic.bus.RxEventBus;
-import io.starter.biruk.ezymusic.events.AlbumSelectedEvent;
-import io.starter.biruk.ezymusic.events.SelectedAlbumEvent;
-import io.starter.biruk.ezymusic.events.SelectedArtistEvent;
+import io.starter.biruk.ezymusic.events.view.AlbumSelectedEvent;
+import io.starter.biruk.ezymusic.events.view.SelectedArtistEvent;
 import io.starter.biruk.ezymusic.events.adapterPosition.AlbumAdapterPositionEvent;
 import io.starter.biruk.ezymusic.model.dao.albumDAO.AlbumRepository;
 import io.starter.biruk.ezymusic.model.entity.Song;

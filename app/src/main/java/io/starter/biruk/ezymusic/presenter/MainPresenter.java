@@ -1,17 +1,12 @@
 package io.starter.biruk.ezymusic.presenter;
 
-import android.util.Log;
-
 import java.util.List;
 
 import io.reactivex.Scheduler;
 import io.reactivex.annotations.NonNull;
-import io.reactivex.observers.DisposableObserver;
 import io.reactivex.observers.DisposableSingleObserver;
 import io.starter.biruk.ezymusic.bus.ReplayEventBus;
-import io.starter.biruk.ezymusic.bus.RxEventBus;
-import io.starter.biruk.ezymusic.events.SongLoadCompletedEvent;
-import io.starter.biruk.ezymusic.model.dao.searchDAO.SearchRepository;
+import io.starter.biruk.ezymusic.events.view.SongLoadCompletedEvent;
 import io.starter.biruk.ezymusic.model.dao.songDao.SongRepository;
 import io.starter.biruk.ezymusic.model.entity.Song;
 import io.starter.biruk.ezymusic.model.songFetcher.SongStorageUtil;
