@@ -6,3 +6,5 @@ settings.gradle
 .DS_Store
 /build
 /captures
+.gradle/
+dexter/
