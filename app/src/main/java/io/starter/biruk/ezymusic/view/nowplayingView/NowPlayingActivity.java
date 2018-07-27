@@ -9,6 +9,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.View;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
@@ -18,16 +19,9 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
+import com.wunderlist.slidinglayer.SlidingLayer;
 
-import java.util.concurrent.TimeUnit;
-
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.annotations.NonNull;
-import io.reactivex.functions.Action;
-import io.reactivex.observers.DisposableObserver;
 import io.reactivex.schedulers.Schedulers;
 import io.starter.biruk.ezymusic.R;
 import io.starter.biruk.ezymusic.bus.RxEventBus;
@@ -42,10 +36,13 @@ import io.starter.biruk.ezymusic.service.playbackMode.Shuffle;
 import io.starter.biruk.ezymusic.util.ImageTransform.CircleTransform;
 import io.starter.biruk.ezymusic.util.SongFormatUtil;
 import io.starter.biruk.ezymusic.util.ViewAnimatiorUtil;
+import io.starter.biruk.ezymusic.util.ViewTypeConstant;
 import io.starter.biruk.ezymusic.util.animation.FadeAnimation;
 import io.starter.biruk.ezymusic.util.view.Direction;
 import io.starter.biruk.ezymusic.util.view.OnSwipeListener;
 import io.starter.biruk.ezymusic.view.nowplayingView.nowPlayingViewFragment.NowPlayingFragment;
+import io.starter.biruk.ezymusic.view.queueView.QueueFragment;
+import io.starter.biruk.ezymusic.view.songsView.SongsFragment;
 
 public class NowPlayingActivity extends AppCompatActivity implements NowPlayingView {
 
@@ -61,7 +58,7 @@ public class NowPlayingActivity extends AppCompatActivity implements NowPlayingV
     private ImageView currentSongCoverSmall;
     private TextView currentSongArtistView;
     private TextView currentSongTitleView;
-    private ImageView playQueueView;
+    private ImageView queueBtnView;
 
     private ImageButton favoriteBtn;
 
@@ -75,7 +72,8 @@ public class NowPlayingActivity extends AppCompatActivity implements NowPlayingV
     private ImageButton repeatButton;
 
     private FrameLayout mainViewContainer;
-
+    private FrameLayout queueContainer;
+    private SlidingLayer queueSlider;
 
     private ImageButton playButton;
     private ImageButton previousButton;
@@ -133,7 +131,6 @@ public class NowPlayingActivity extends AppCompatActivity implements NowPlayingV
         });
 
         mainViewContainer.setOnTouchListener((v, event) -> {
-            Log.d(TAG, " onTouch");
             swipeDetector.onTouchEvent(event);
             return true;
         });
@@ -150,7 +147,6 @@ public class NowPlayingActivity extends AppCompatActivity implements NowPlayingV
         currentSongCoverSmall = (ImageView) findViewById(R.id.current_song_mini_image_view);
         currentSongArtistView = (TextView) findViewById(R.id.current_song_mini_artist);
         currentSongTitleView = (TextView) findViewById(R.id.current_song_mini_title);
-        playQueueView = (ImageView) findViewById(R.id.play_queue);
 
         currentDurationView = (TextView) findViewById(R.id.elapsedTimeSeekbarProgress);
         durationView = (TextView) findViewById(R.id.song_duration_text_view);
@@ -168,6 +164,10 @@ public class NowPlayingActivity extends AppCompatActivity implements NowPlayingV
 
         shuffleButton = (ImageButton) findViewById(R.id.shuffle);
         repeatButton = (ImageButton) findViewById(R.id.repeat);
+
+        queueContainer= (FrameLayout) findViewById(R.id.queue_container);
+        queueSlider= (SlidingLayer) findViewById(R.id.queue_sliding_layout);
+        queueBtnView = (ImageView) findViewById(R.id.queue_btn);
     }
 
     @Override
@@ -191,6 +191,24 @@ public class NowPlayingActivity extends AppCompatActivity implements NowPlayingV
         nowPlayingPresenter.loadMediaStatus();
         nowPlayingPresenter.requestMediaStatus();
         nowPlayingPresenter.mediaCallbackListener();
+        initQueueView();
+    }
+
+    public void initQueueView(){
+        queueBtnView.setOnClickListener(v->{
+            if (queueSlider.isClosed()){
+                queueSlider.openLayer(true);
+
+                getSupportFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.queue_container,new QueueFragment())
+                        .commit();
+
+            }else {
+                queueSlider.closeLayer(true);
+            }
+        });
+
     }
 
     @Override

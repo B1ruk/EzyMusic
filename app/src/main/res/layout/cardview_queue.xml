@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardCornerRadius="4dp"
+    app:cardElevation="4dp"
+    app:cardUseCompatPadding="false"
+    android:id="@+id/queue_cardview_song">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp">
+
+        <ImageView
+            android:id="@+id/queue_song_cover_image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="4dp"
+            android:src="@drawable/music_list_"/>
+
+        <TextView
+            android:id="@+id/queue_song_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="8dp"
+            tools:text="not over you"
+            android:textAppearance="?android:attr/textAppearance"
+            android:layout_toRightOf="@+id/queue_song_cover_image"/>
+
+
+        <TextView
+            android:id="@+id/queue_song_artist"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:layout_alignLeft="@+id/queue_song_title"
+            tools:text="Gavin Degraw"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:layout_toRightOf="@+id/queue_song_cover_image"
+            android:layout_below="@+id/queue_song_title"/>
+
+
+        <ImageView
+            android:id="@+id/queue_song_dragger"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignBottom="@+id/queue_song_artist"
+            android:layout_marginRight="8dp"
+            android:src="@drawable/ic_queue_24dp"/>
+    </RelativeLayout>
+
+
+</android.support.v7.widget.CardView>
