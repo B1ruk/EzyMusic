@@ -36,9 +36,6 @@ public class SongsFragment extends BaseFragment implements SongView {
 
     private static final String TAG = "songsFragment";
 
-    /*
-    * a string used for determining the type of view to initiate
-    * */
     private String viewType;
 
     RelativeLayout rootLayout;
